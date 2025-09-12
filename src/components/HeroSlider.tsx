@@ -2,12 +2,9 @@ import { useState, useEffect } from 'react';
 import { Button } from "./ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { Link } from 'react-router-dom';
 
-interface HeroSliderProps {
-  onNavigate: (page: string) => void;
-}
-
-export function HeroSlider({ onNavigate }: HeroSliderProps) {
+export function HeroSlider() {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const slides = [
@@ -71,13 +68,14 @@ export function HeroSlider({ onNavigate }: HeroSliderProps) {
           <p className="text-xl mb-8 text-green-50">
             {slides[currentSlide].subtitle}
           </p>
-          <Button 
-            size="lg" 
-            className="bg-white text-green-600 hover:bg-green-50"
-            onClick={() => onNavigate('login')}
-          >
-            {slides[currentSlide].cta}
-          </Button>
+          <Link to="/login">
+            <Button
+              size="lg"
+              className="bg-white text-green-600 hover:bg-green-50"
+            >
+              {slides[currentSlide].cta}
+            </Button>
+          </Link>
         </div>
       </div>
 

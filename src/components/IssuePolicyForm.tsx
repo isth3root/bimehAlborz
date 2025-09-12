@@ -134,14 +134,14 @@ export function IssuePolicyForm({ customers, onIssuePolicy }: IssuePolicyFormPro
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="pdfFile" className="text-right">
-                فایل PDF
+              <Label htmlFor="pdfUrl" className="text-right">
+                لینک PDF
               </Label>
-              {/* TODO: Implement proper file upload functionality */}
               <Input
-                id="pdfFile"
-                type="file"
-                onChange={(e) => setPdfFile(e.target.files ? e.target.files[0] : null)}
+                id="pdfUrl"
+                type="text"
+                placeholder="https://example.com/policy.pdf"
+                onChange={(e) => setPdfFile(e.target.value)}
                 className="col-span-3"
               />
             </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -34,42 +35,16 @@ interface AdminDashboardProps {
   onLogout: () => void;
 }
 
+import { customers as initialCustomers, policies as initialPolicies, installments as initialInstallments, blogPosts as initialBlogPosts, faqs as initialFaqs } from '../data';
 export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPolicyId, setSelectedPolicyId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('customers');
-  const [customers, setCustomers] = useState([
-    {
-      id: '1',
-      name: 'احمد محمدی',
-      nationalCode: '1234567890',
-      phone: '09123456789',
-      email: 'ahmad@example.com',
-      joinDate: '۱۴۰۳/۰۴/۱۵',
-      activePolicies: 3,
-      status: 'فعال'
-    },
-    {
-      id: '2',
-      name: 'فاطمه احمدی',
-      nationalCode: '0987654321',
-      phone: '09187654321',
-      email: 'fateme@example.com',
-      joinDate: '۱۴۰۳/۰۳/۱۰',
-      activePolicies: 1,
-      status: 'فعال'
-    },
-    {
-      id: '3',
-      name: 'علی رضایی',
-      nationalCode: '5555555555',
-      phone: '09155555555',
-      email: 'ali@example.com',
-      joinDate: '۱۴۰۳/۰۲/۰۵',
-      activePolicies: 2,
-      status: 'غیرفعال'
-    }
-  ]);
+  const [customers, setCustomers] = useLocalStorage('customers', initialCustomers);
+  const [policies, setPolicies] = useLocalStorage('policies', initialPolicies);
+  const [installments, setInstallments] = useLocalStorage('installments', initialInstallments);
+  const [blogPosts, setBlogPosts] = useLocalStorage('blogPosts', initialBlogPosts);
+  const [faqs, setFaqs] = useLocalStorage('faqs', initialFaqs);
 
   const handleAddCustomer = (customer: any) => {
     setCustomers([...customers, customer]);
@@ -88,39 +63,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       setCustomers(customers.filter((customer) => customer.id !== customerId));
     }
   };
-
-  const [policies, setPolicies] = useState([
-    {
-      id: '12345',
-      customerName: 'احمد محمدی',
-      type: 'شخص ثالث',
-      vehicle: 'پژو ۴۰۵',
-      startDate: '۱۴۰۳/۰۶/۰۱',
-      endDate: '۱۴۰۴/۰۶/۰۱',
-      premium: '۵,۰۰۰,۰۰۰',
-      status: 'فعال'
-    },
-    {
-      id: '12346',
-      customerName: 'احمد محمدی',
-      type: 'بدنه خودرو',
-      vehicle: 'پژو ۴۰۵',
-      startDate: '۱۴۰۳/۰۶/۰۱',
-      endDate: '۱۴۰۴/۰۶/۰۱',
-      premium: '۱۶,۰۰۰,۰۰۰',
-      status: 'فعال'
-    },
-    {
-      id: '12347',
-      customerName: 'فاطمه احمدی',
-      type: 'آتش‌سوزی',
-      vehicle: 'آپارتمان',
-      startDate: '۱۴۰۳/۰۴/۱۵',
-      endDate: '۱۴۰۴/۰۴/۱۵',
-      premium: '۳,۰۰۰,۰۰۰',
-      status: 'نزدیک انقضا'
-    }
-  ]);
 
   const handleIssuePolicy = (policy: any) => {
     setPolicies([...policies, policy]);
@@ -184,65 +126,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     }
   };
 
-  const [faqs, setFaqs] = useState([
-    {
-      id: '1',
-      question: 'چگونه می‌توانم بیمه نامه خود را تمدید کنم؟',
-      answer: 'شما می‌توانید با مراجعه به پنل کاربری خود و انتخاب گزینه تمدید، بیمه نامه خود را تمدید کنید.',
-    },
-    {
-      id: '2',
-      question: 'آیا می‌توانم اطلاعات بیمه نامه خود را ویرایش کنم؟',
-      answer: 'بله، شما می‌توانید با مراجعه به پنل کاربری خود و انتخاب گزینه ویرایش، اطلاعات بیمه نامه خود را ویرایش کنید.',
-    },
-  ]);
-
-  const [blogPosts, setBlogPosts] = useState([
-    {
-      id: '1',
-      title: 'چگونه بهترین بیمه را انتخاب کنیم؟',
-      publishDate: '۱۴۰۳/۰۶/۱۰',
-    },
-    {
-      id: '2',
-      title: 'نکات مهم در خرید بیمه شخص ثالث',
-      publishDate: '۱۴۰۳/۰۵/۲۰',
-    },
-  ]);
-
-  const [installments, setInstallments] = useState([
-    {
-      id: '1',
-      policyId: '12345',
-      customerName: 'احمد محمدی',
-      policyType: 'شخص ثالث',
-      amount: '۲,۵۰۰,۰۰۰',
-      dueDate: '۱۴۰۳/۰۹/۰۱',
-      status: 'معوق',
-      daysOverdue: 5
-    },
-    {
-      id: '2',
-      policyId: '12345',
-      customerName: 'احمد محمدی',
-      policyType: 'شخص ثالث',
-      amount: '۲,۵۰۰,۰۰۰',
-      dueDate: '۱۴۰۳/۱۰/۰۱',
-      status: 'آینده',
-      daysOverdue: 0
-    },
-    {
-      id: '3',
-      policyId: '12347',
-      customerName: 'فاطمه احمدی',
-      policyType: 'آتش‌سوزی',
-      amount: '۱,۵۰۰,۰۰۰',
-      dueDate: '۱۴۰۳/۰۸/۲۸',
-      status: 'پرداخت شده',
-      daysOverdue: 0
-    }
-  ]);
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'فعال':
@@ -277,7 +160,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             </div>
             
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => alert('Settings functionality not implemented yet.')}>
+              <Button variant="ghost" size="sm" onClick={() => {}}>
                 <Settings className="h-4 w-4 ml-2" />
                 تنظیمات
               </Button>

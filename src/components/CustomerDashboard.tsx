@@ -1,6 +1,7 @@
 import { ViewPolicyDetails } from "./ViewPolicyDetails";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
+import { policies as initialPolicies, installments as initialInstallments } from '../data';
 import { Badge } from "./ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Progress } from "./ui/progress";
@@ -22,98 +23,16 @@ interface CustomerDashboardProps {
 }
 
 export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
-  const handleDownload = (file: File) => {
-    if (file) {
-      const url = URL.createObjectURL(file);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = file.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+  const handleDownload = (pdfUrl: string) => {
+    if (pdfUrl) {
+      window.open(pdfUrl, '_blank');
     } else {
       alert('No PDF file available for this policy.');
     }
   };
 
-  const insurancePolicies = [
-    {
-      id: '12345',
-      type: 'شخص ثالث',
-      vehicle: 'پژو ۴۰۵ - ۱۴۰۰',
-      plateNumber: '۱۲ ط ۳۴۵ ایران ۱۶',
-      startDate: '۱۴۰۳/۰۶/۰۱',
-      endDate: '۱۴۰۴/۰۶/۰۱',
-      status: 'فعال',
-      icon: Car,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50'
-    },
-    {
-      id: '12346',
-      type: 'بدنه خودرو',
-      vehicle: 'پژو ۴۰۵ - ۱۴۰۰',
-      plateNumber: '۱۲ ط ۳۴۵ ایران ۱۶',
-      startDate: '۱۴۰۳/۰۶/۰۱',
-      endDate: '۱۴۰۴/۰۶/۰۱',
-      status: 'فعال',
-      icon: Shield,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50'
-    },
-    {
-      id: '12347',
-      type: 'آتش‌سوزی منزل',
-      vehicle: 'آپارتمان ۱۲۰ متری',
-      plateNumber: 'تهران، خیابان آزادی',
-      startDate: '۱۴۰۳/۰۴/۱۵',
-      endDate: '۱۴۰۴/۰۴/۱۵',
-      status: 'نزدیک انقضا',
-      icon: Flame,
-      color: 'text-red-600',
-      bgColor: 'bg-red-50'
-    }
-  ];
-
-  const installments = [
-    {
-      policyId: '12345',
-      policyType: 'شخص ثالث',
-      installmentNumber: 1,
-      amount: '۲,۵۰۰,۰۰۰',
-      dueDate: '۱۴۰۳/۰۷/۰۱',
-      status: 'پرداخت شده',
-      paymentDate: '۱۴۰۳/۰۶/۲۸'
-    },
-    {
-      policyId: '12345',
-      policyType: 'شخص ثالث',
-      installmentNumber: 2,
-      amount: '۲,۵۰۰,۰۰۰',
-      dueDate: '۱۴۰۳/۰۸/۰۱',
-      status: 'پرداخت شده',
-      paymentDate: '۱۴۰۳/۰۷/۲۹'
-    },
-    {
-      policyId: '12346',
-      policyType: 'بدنه خودرو',
-      installmentNumber: 1,
-      amount: '۸,۰۰۰,۰۰۰',
-      dueDate: '۱۴۰۳/۰۹/۰۱',
-      status: 'معوق',
-      paymentDate: '-'
-    },
-    {
-      policyId: '12346',
-      policyType: 'بدنه خودرو',
-      installmentNumber: 2,
-      amount: '۸,۰۰۰,۰۰۰',
-      dueDate: '۱۴۰۳/۱۰/۰۱',
-      status: 'آینده',
-      paymentDate: '-'
-    }
-  ];
+  const insurancePolicies = initialPolicies;
+  const installments = initialInstallments;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -158,7 +77,7 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
             </div>
             
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => alert('Support functionality not implemented yet.')}>
+              <Button variant="ghost" size="sm" onClick={() => {}}>
                 <Phone className="h-4 w-4 ml-2" />
                 پشتیبانی
               </Button>
@@ -321,12 +240,12 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                     <TableCell>{getPaymentStatusBadge(installment.status)}</TableCell>
                     <TableCell>
                       {installment.status === 'معوق' && (
-                        <Button size="sm" className="bg-red-600 hover:bg-red-700" onClick={() => alert('Payment functionality not implemented yet.')}>
+                        <Button size="sm" className="bg-red-600 hover:bg-red-700" onClick={() => {}}>
                           پرداخت
                         </Button>
                       )}
                       {installment.status === 'پرداخت شده' && (
-                        <Button size="sm" variant="outline" onClick={() => alert('Receipt functionality not implemented yet.')}>
+                        <Button size="sm" variant="outline" onClick={() => {}}>
                           رسید
                         </Button>
                       )}
