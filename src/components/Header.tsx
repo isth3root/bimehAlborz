@@ -1,12 +1,12 @@
 import { Button } from "./ui/button";
 import { Menu, User, Phone, Mail } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface HeaderProps {
-  onNavigate: (page: string) => void;
   currentPage: string;
 }
 
-export function Header({ onNavigate, currentPage }: HeaderProps) {
+export function Header({ currentPage }: HeaderProps) {
   return (
     <header className="bg-white shadow-sm border-b">
       {/* Top bar */}
@@ -22,15 +22,16 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
               <span className="text-sm text-gray-600">info@alborz-insurance.ir</span>
             </div>
           </div>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => onNavigate('login')}
-            className="text-green-600 hover:text-green-700"
-          >
-            <User className="h-4 w-4 mr-2" />
-            ورود به سامانه
-          </Button>
+          <Link to="/login">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-green-600 hover:text-green-700"
+            >
+              <User className="h-4 w-4 mr-2" />
+              ورود به سامانه
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -48,30 +49,30 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
           </div>
 
           <nav className="hidden md:flex items-center gap-8">
-            <button
-              onClick={() => onNavigate('home')}
-              className={`transition-colors ${currentPage === 'home' ? 'text-green-600' : 'text-gray-700 hover:text-green-600'}`}
+            <Link
+              to="/"
+              className={`transition-colors ${currentPage === '/' ? 'text-green-600' : 'text-gray-700 hover:text-green-600'}`}
             >
               صفحه اصلی
-            </button>
-            <button
-              onClick={() => onNavigate('services')}
-              className={`transition-colors ${currentPage === 'services' ? 'text-green-600' : 'text-gray-700 hover:text-green-600'}`}
+            </Link>
+            <Link
+              to="/services"
+              className={`transition-colors ${currentPage === '/services' ? 'text-green-600' : 'text-gray-700 hover:text-green-600'}`}
             >
               خدمات
-            </button>
-            <button
-              onClick={() => onNavigate('about-us')}
-              className={`transition-colors ${currentPage === 'about-us' ? 'text-green-600' : 'text-gray-700 hover:text-green-600'}`}
+            </Link>
+            <Link
+              to="/about-us"
+              className={`transition-colors ${currentPage === '/about-us' ? 'text-green-600' : 'text-gray-700 hover:text-green-600'}`}
             >
               درباره ما
-            </button>
-            <button
-              onClick={() => onNavigate('contact-us')}
-              className={`transition-colors ${currentPage === 'contact-us' ? 'text-green-600' : 'text-gray-700 hover:text-green-600'}`}
+            </Link>
+            <Link
+              to="/contact-us"
+              className={`transition-colors ${currentPage === '/contact-us' ? 'text-green-600' : 'text-gray-700 hover:text-green-600'}`}
             >
               تماس با ما
-            </button>
+            </Link>
           </nav>
 
           <Button className="md:hidden" variant="ghost" size="sm">

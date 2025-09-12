@@ -1,12 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Car, Shield, Flame, Users, Home, Briefcase } from "lucide-react";
+import { Link } from "react-router-dom";
 
-interface ServicesSectionProps {
-  onNavigate: (page: string, data?: any) => void;
-}
-
-export function ServicesSection({ onNavigate }: ServicesSectionProps) {
+export function ServicesSection() {
   const services = [
     {
       id: 1,
@@ -91,9 +88,11 @@ export function ServicesSection({ onNavigate }: ServicesSectionProps) {
                       </li>
                     ))}
                   </ul>
-                  <Button className="w-full" variant="outline" onClick={() => onNavigate('service-details', service)}>
-                    اطلاعات بیشتر
-                  </Button>
+                  <Link to={`/service-details/${service.id}`} state={{ service }}>
+                    <Button className="w-full" variant="outline">
+                      اطلاعات بیشتر
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             );

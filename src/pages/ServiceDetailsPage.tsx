@@ -1,15 +1,26 @@
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
+import { useLocation, useParams } from "react-router-dom";
+import { services } from "../data";
 
-export function ServiceDetailsPage({ service }: { service: any }) {
+export function ServiceDetailsPage() {
+  const { id } = useParams();
+  const location = useLocation();
+  const { state } = location;
+  const selectedService = state?.service || services.find((s) => s.id === Number(id));
+
+  if (!selectedService) {
+    return <div>سرویس مورد نظر یافت نشد.</div>;
+  }
+
   return (
     <div className="min-h-screen bg-white">
-      <Header onNavigate={() => {}} currentPage="services" />
+      <Header currentPage="/services" />
       <div className="bg-gray-50">
         <div className="container mx-auto px-4 py-16 text-center">
-          <h1 className="text-4xl font-bold text-gray-800">{service.title}</h1>
+          <h1 className="text-4xl font-bold text-gray-800">{selectedService.title}</h1>
           <p className="mt-4 text-lg text-gray-600">
-            {service.description}
+            {selectedService.description}
           </p>
         </div>
       </div>

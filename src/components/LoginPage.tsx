@@ -5,12 +5,12 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { ArrowRight } from "lucide-react";
 
+import { Link } from 'react-router-dom';
 interface LoginPageProps {
   onLogin: (userType: 'customer' | 'admin') => void;
-  onNavigate: (page: string) => void;
 }
 
-export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
+export function LoginPage({ onLogin }: LoginPageProps) {
   const [nationalCode, setNationalCode] = useState('');
   const [insuranceCode, setInsuranceCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -100,14 +100,15 @@ export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
             </div>
 
             <div className="mt-6 text-center">
-              <Button 
-                variant="ghost" 
-                onClick={() => onNavigate('home')}
-                className="text-gray-600 hover:text-gray-700"
-              >
-                <ArrowRight className="h-4 w-4 ml-2" />
-                بازگشت به صفحه اصلی
-              </Button>
+              <Link to="/">
+                <Button
+                  variant="ghost"
+                  className="text-gray-600 hover:text-gray-700"
+                >
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                  بازگشت به صفحه اصلی
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>

@@ -1,9 +1,6 @@
 import { useState } from 'react';
+import { BrowserRouter, Routes, Route, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Header } from './components/Header';
-import { HeroSlider } from './components/HeroSlider';
-import { ServicesSection } from './components/ServicesSection';
-import { BlogSection } from './components/BlogSection';
-import { FAQSection } from './components/FAQSection';
 import { Footer } from './components/Footer';
 import { LoginPage } from './components/LoginPage';
 import { CustomerDashboard } from './components/CustomerDashboard';
@@ -12,69 +9,57 @@ import { ServicesPage } from './pages/ServicesPage';
 import { AboutUsPage } from './pages/AboutUsPage';
 import { ContactUsPage } from './pages/ContactUsPage';
 import { ServiceDetailsPage } from './pages/ServiceDetailsPage';
+import { HomePage } from './pages/HomePage';
 
-type Page = 'home' | 'login' | 'customer-dashboard' | 'admin-dashboard' | 'services' | 'about-us' | 'contact-us' | 'service-details';
-type UserType = 'customer' | 'admin' | null;
+function Layout() {
+  const location = useLocation();
+  return (
+    <div className="min-h-screen bg-white">
+      <Header currentPage={location.pathname} />
+      <Outlet />
+      <Footer />
+    </div>
+  );
+}
 
-export default function App() {
-  const [currentPage, setCurrentPage] = useState<Page>('home');
-  const [userType, setUserType] = useState<UserType>(null);
-  const [selectedService, setSelectedService] = useState<any>(null);
-
-  const handleNavigate = (page: string, data?: any) => {
-    setCurrentPage(page as Page);
-    if (page === 'service-details') {
-      setSelectedService(data);
-    }
-  };
+function AppContent() {
+  const [userType, setUserType] = useState(null);
+  const navigate = useNavigate();
 
   const handleLogin = (type: 'customer' | 'admin') => {
     setUserType(type);
-    setCurrentPage(type === 'customer' ? 'customer-dashboard' : 'admin-dashboard');
+    if (type === 'customer') {
+      navigate('/customer-dashboard');
+    } else {
+      navigate('/admin-dashboard');
+    }
   };
 
   const handleLogout = () => {
     setUserType(null);
-    setCurrentPage('home');
+    navigate('/');
   };
 
-  if (currentPage === 'login') {
-    return <LoginPage onLogin={handleLogin} onNavigate={handleNavigate} />;
-  }
-
-  if (currentPage === 'customer-dashboard' && userType === 'customer') {
-    return <CustomerDashboard onLogout={handleLogout} />;
-  }
-
-  if (currentPage === 'admin-dashboard' && userType === 'admin') {
-    return <AdminDashboard onLogout={handleLogout} />;
-  }
-
-  if (currentPage === 'services') {
-    return <ServicesPage />;
-  }
-
-  if (currentPage === 'about-us') {
-    return <AboutUsPage />;
-  }
-
-  if (currentPage === 'contact-us') {
-    return <ContactUsPage />;
-  }
-
-  if (currentPage === 'service-details' && selectedService) {
-    return <ServiceDetailsPage service={selectedService} />;
-  }
-
-  // Homepage
   return (
-    <div className="min-h-screen bg-white">
-      <Header onNavigate={handleNavigate} currentPage={currentPage} />
-      <HeroSlider onNavigate={handleNavigate} />
-      <ServicesSection onNavigate={handleNavigate} />
-      <BlogSection />
-      <FAQSection />
-      <Footer />
-    </div>
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<HomePage />} />
+        <Route path="services" element={<ServicesPage />} />
+        <Route path="about-us" element={<AboutUsPage />} />
+        <Route path="contact-us" element={<ContactUsPage />} />
+        <Route path="service-details/:id" element={<ServiceDetailsPage />} />
+      </Route>
+      <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+      <Route path="/customer-dashboard" element={<CustomerDashboard onLogout={handleLogout} />} />
+      <Route path="/admin-dashboard" element={<AdminDashboard onLogout={handleLogout} />} />
+    </Routes>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
   );
 }

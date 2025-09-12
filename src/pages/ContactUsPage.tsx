@@ -9,7 +9,7 @@ import { Phone, Mail, MapPin } from "lucide-react";
 export function ContactUsPage() {
   return (
     <div className="min-h-screen bg-white">
-      <Header onNavigate={() => {}} currentPage="contact-us" />
+      <Header currentPage="/contact-us" />
       <div className="bg-gray-50">
         <div className="container mx-auto px-4 py-16 text-center">
           <h1 className="text-4xl font-bold text-gray-800">تماس با ما</h1>

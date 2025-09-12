@@ -12,6 +12,7 @@ import {
   DialogFooter,
   DialogClose,
 } from "./ui/dialog";
+import { Plus } from 'lucide-react';
 
 interface AddCustomerFormProps {
   onAddCustomer: (customer: any) => void;
