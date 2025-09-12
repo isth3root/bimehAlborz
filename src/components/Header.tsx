@@ -53,13 +53,13 @@ export function Header({ onNavigate }: HeaderProps) {
             >
               صفحه اصلی
             </button>
-            <button className="text-gray-700 hover:text-green-600 transition-colors">
+            <button onClick={() => onNavigate('services')} className="text-gray-700 hover:text-green-600 transition-colors">
               خدمات
             </button>
-            <button className="text-gray-700 hover:text-green-600 transition-colors">
+            <button onClick={() => onNavigate('about-us')} className="text-gray-700 hover:text-green-600 transition-colors">
               درباره ما
             </button>
-            <button className="text-gray-700 hover:text-green-600 transition-colors">
+            <button onClick={() => onNavigate('contact-us')} className="text-gray-700 hover:text-green-600 transition-colors">
               تماس با ما
             </button>
           </nav>

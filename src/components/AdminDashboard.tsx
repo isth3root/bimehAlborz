@@ -148,7 +148,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             </div>
             
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" onClick={() => alert('Settings functionality not implemented yet.')}>
                 <Settings className="h-4 w-4 ml-2" />
                 تنظیمات
               </Button>
@@ -242,7 +242,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       لیست مشتریان و مدیریت اطلاعات آنها
                     </CardDescription>
                   </div>
-                  <Button>
+                  <Button onClick={() => alert('Add customer functionality not implemented yet.')}>
                     <Plus className="h-4 w-4 ml-2" />
                     افزودن مشتری
                   </Button>
@@ -284,10 +284,10 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         <TableCell>{getStatusBadge(customer.status)}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline">
+                            <Button size="sm" variant="outline" onClick={() => alert('Edit customer functionality not implemented yet.')}>
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
+                            <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => alert('Delete customer functionality not implemented yet.')}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -311,7 +311,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       لیست بیمه‌نامه‌ها و وضعیت آنها
                     </CardDescription>
                   </div>
-                  <Button>
+                  <Button onClick={() => alert('Issue policy functionality not implemented yet.')}>
                     <Plus className="h-4 w-4 ml-2" />
                     صدور بیمه‌نامه
                   </Button>
@@ -345,10 +345,10 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         <TableCell>{getStatusBadge(policy.status)}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline">
+                            <Button size="sm" variant="outline" onClick={() => alert('Edit policy functionality not implemented yet.')}>
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button size="sm" variant="outline">
+                            <Button size="sm" variant="outline" onClick={() => alert('View policy functionality not implemented yet.')}>
                               مشاهده
                             </Button>
                           </div>
@@ -401,11 +401,11 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         <TableCell>
                           <div className="flex gap-2">
                             {installment.status === 'معوق' && (
-                              <Button size="sm" className="bg-red-600 hover:bg-red-700">
+                              <Button size="sm" className="bg-red-600 hover:bg-red-700" onClick={() => alert('Follow up functionality not implemented yet.')}>
                                 پیگیری
                               </Button>
                             )}
-                            <Button size="sm" variant="outline">
+                            <Button size="sm" variant="outline" onClick={() => alert('Details functionality not implemented yet.')}>
                               جزئیات
                             </Button>
                           </div>
