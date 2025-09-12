@@ -3,9 +3,10 @@ import { Menu, User, Phone, Mail } from "lucide-react";
 
 interface HeaderProps {
   onNavigate: (page: string) => void;
+  currentPage: string;
 }
 
-export function Header({ onNavigate }: HeaderProps) {
+export function Header({ onNavigate, currentPage }: HeaderProps) {
   return (
     <header className="bg-white shadow-sm border-b">
       {/* Top bar */}
@@ -47,19 +48,28 @@ export function Header({ onNavigate }: HeaderProps) {
           </div>
 
           <nav className="hidden md:flex items-center gap-8">
-            <button 
+            <button
               onClick={() => onNavigate('home')}
-              className="text-gray-700 hover:text-green-600 transition-colors"
+              className={`transition-colors ${currentPage === 'home' ? 'text-green-600' : 'text-gray-700 hover:text-green-600'}`}
             >
               صفحه اصلی
             </button>
-            <button onClick={() => onNavigate('services')} className="text-gray-700 hover:text-green-600 transition-colors">
+            <button
+              onClick={() => onNavigate('services')}
+              className={`transition-colors ${currentPage === 'services' ? 'text-green-600' : 'text-gray-700 hover:text-green-600'}`}
+            >
               خدمات
             </button>
-            <button onClick={() => onNavigate('about-us')} className="text-gray-700 hover:text-green-600 transition-colors">
+            <button
+              onClick={() => onNavigate('about-us')}
+              className={`transition-colors ${currentPage === 'about-us' ? 'text-green-600' : 'text-gray-700 hover:text-green-600'}`}
+            >
               درباره ما
             </button>
-            <button onClick={() => onNavigate('contact-us')} className="text-gray-700 hover:text-green-600 transition-colors">
+            <button
+              onClick={() => onNavigate('contact-us')}
+              className={`transition-colors ${currentPage === 'contact-us' ? 'text-green-600' : 'text-gray-700 hover:text-green-600'}`}
+            >
               تماس با ما
             </button>
           </nav>
