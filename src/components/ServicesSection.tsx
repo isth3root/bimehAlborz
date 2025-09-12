@@ -2,7 +2,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/
 import { Button } from "./ui/button";
 import { Car, Shield, Flame, Users, Home, Briefcase } from "lucide-react";
 
-export function ServicesSection() {
+interface ServicesSectionProps {
+  onNavigate: (page: string, data?: any) => void;
+}
+
+export function ServicesSection({ onNavigate }: ServicesSectionProps) {
   const services = [
     {
       id: 1,
@@ -87,7 +91,7 @@ export function ServicesSection() {
                       </li>
                     ))}
                   </ul>
-                  <Button className="w-full" variant="outline">
+                  <Button className="w-full" variant="outline" onClick={() => onNavigate('service-details', service)}>
                     اطلاعات بیشتر
                   </Button>
                 </CardContent>

@@ -19,6 +19,16 @@ import {
   DollarSign,
   Calendar
 } from "lucide-react";
+import { AddCustomerForm } from './AddCustomerForm';
+import { EditCustomerForm } from './EditCustomerForm';
+import { IssuePolicyForm } from './IssuePolicyForm';
+import { EditPolicyForm } from './EditPolicyForm';
+import { ViewPolicyDetails } from './ViewPolicyDetails';
+import { AddInstallmentForm } from './AddInstallmentForm';
+import { AddBlogPostForm } from './AddBlogPostForm';
+import { EditBlogPostForm } from './EditBlogPostForm';
+import { AddFaqForm } from './AddFaqForm';
+import { EditFaqForm } from './EditFaqForm';
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -26,8 +36,9 @@ interface AdminDashboardProps {
 
 export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [searchQuery, setSearchQuery] = useState('');
-
-  const customers = [
+  const [selectedPolicyId, setSelectedPolicyId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('customers');
+  const [customers, setCustomers] = useState([
     {
       id: '1',
       name: 'احمد محمدی',
@@ -58,9 +69,27 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       activePolicies: 2,
       status: 'غیرفعال'
     }
-  ];
+  ]);
 
-  const policies = [
+  const handleAddCustomer = (customer: any) => {
+    setCustomers([...customers, customer]);
+  };
+
+  const handleEditCustomer = (updatedCustomer: any) => {
+    setCustomers(
+      customers.map((customer) =>
+        customer.id === updatedCustomer.id ? updatedCustomer : customer
+      )
+    );
+  };
+
+  const handleDeleteCustomer = (customerId: string) => {
+    if (window.confirm('Are you sure you want to delete this customer?')) {
+      setCustomers(customers.filter((customer) => customer.id !== customerId));
+    }
+  };
+
+  const [policies, setPolicies] = useState([
     {
       id: '12345',
       customerName: 'احمد محمدی',
@@ -91,11 +120,100 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       premium: '۳,۰۰۰,۰۰۰',
       status: 'نزدیک انقضا'
     }
-  ];
+  ]);
 
-  const recentInstallments = [
+  const handleIssuePolicy = (policy: any) => {
+    setPolicies([...policies, policy]);
+  };
+
+  const handleEditPolicy = (updatedPolicy: any) => {
+    setPolicies(
+      policies.map((policy) =>
+        policy.id === updatedPolicy.id ? updatedPolicy : policy
+      )
+    );
+  };
+
+  const handleAddInstallment = (installment: any) => {
+    setInstallments([...installments, installment]);
+  };
+
+  const handleMarkAsPaid = (installmentId: string) => {
+    setInstallments(
+      installments.map((installment) =>
+        installment.id === installmentId
+          ? { ...installment, status: 'پرداخت شده' }
+          : installment
+      )
+    );
+  };
+
+  const handleAddBlogPost = (post: any) => {
+    setBlogPosts([...blogPosts, post]);
+  };
+
+  const handleEditBlogPost = (updatedPost: any) => {
+    setBlogPosts(
+      blogPosts.map((post) =>
+        post.id === updatedPost.id ? updatedPost : post
+      )
+    );
+  };
+
+  const handleDeleteBlogPost = (postId: string) => {
+    if (window.confirm('Are you sure you want to delete this blog post?')) {
+      setBlogPosts(blogPosts.filter((post) => post.id !== postId));
+    }
+  };
+
+  const handleAddFaq = (faq: any) => {
+    setFaqs([...faqs, faq]);
+  };
+
+  const handleEditFaq = (updatedFaq: any) => {
+    setFaqs(
+      faqs.map((faq) =>
+        faq.id === updatedFaq.id ? updatedFaq : faq
+      )
+    );
+  };
+
+  const handleDeleteFaq = (faqId: string) => {
+    if (window.confirm('Are you sure you want to delete this FAQ?')) {
+      setFaqs(faqs.filter((faq) => faq.id !== faqId));
+    }
+  };
+
+  const [faqs, setFaqs] = useState([
     {
       id: '1',
+      question: 'چگونه می‌توانم بیمه نامه خود را تمدید کنم؟',
+      answer: 'شما می‌توانید با مراجعه به پنل کاربری خود و انتخاب گزینه تمدید، بیمه نامه خود را تمدید کنید.',
+    },
+    {
+      id: '2',
+      question: 'آیا می‌توانم اطلاعات بیمه نامه خود را ویرایش کنم؟',
+      answer: 'بله، شما می‌توانید با مراجعه به پنل کاربری خود و انتخاب گزینه ویرایش، اطلاعات بیمه نامه خود را ویرایش کنید.',
+    },
+  ]);
+
+  const [blogPosts, setBlogPosts] = useState([
+    {
+      id: '1',
+      title: 'چگونه بهترین بیمه را انتخاب کنیم؟',
+      publishDate: '۱۴۰۳/۰۶/۱۰',
+    },
+    {
+      id: '2',
+      title: 'نکات مهم در خرید بیمه شخص ثالث',
+      publishDate: '۱۴۰۳/۰۵/۲۰',
+    },
+  ]);
+
+  const [installments, setInstallments] = useState([
+    {
+      id: '1',
+      policyId: '12345',
       customerName: 'احمد محمدی',
       policyType: 'شخص ثالث',
       amount: '۲,۵۰۰,۰۰۰',
@@ -105,6 +223,17 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     },
     {
       id: '2',
+      policyId: '12345',
+      customerName: 'احمد محمدی',
+      policyType: 'شخص ثالث',
+      amount: '۲,۵۰۰,۰۰۰',
+      dueDate: '۱۴۰۳/۱۰/۰۱',
+      status: 'آینده',
+      daysOverdue: 0
+    },
+    {
+      id: '3',
+      policyId: '12347',
       customerName: 'فاطمه احمدی',
       policyType: 'آتش‌سوزی',
       amount: '۱,۵۰۰,۰۰۰',
@@ -112,7 +241,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       status: 'پرداخت شده',
       daysOverdue: 0
     }
-  ];
+  ]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -224,11 +353,13 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         </div>
 
         {/* Management Tabs */}
-        <Tabs defaultValue="customers" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="customers">مدیریت مشتریان</TabsTrigger>
             <TabsTrigger value="policies">مدیریت بیمه‌نامه‌ها</TabsTrigger>
             <TabsTrigger value="installments">مدیریت اقساط</TabsTrigger>
+            <TabsTrigger value="blog">مدیریت وبلاگ</TabsTrigger>
+            <TabsTrigger value="faq">مدیریت سوالات متداول</TabsTrigger>
           </TabsList>
 
           {/* Customers Management */}
@@ -242,10 +373,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       لیست مشتریان و مدیریت اطلاعات آنها
                     </CardDescription>
                   </div>
-                  <Button onClick={() => alert('Add customer functionality not implemented yet.')}>
-                    <Plus className="h-4 w-4 ml-2" />
-                    افزودن مشتری
-                  </Button>
+                  <AddCustomerForm onAddCustomer={handleAddCustomer} />
                 </div>
               </CardHeader>
               <CardContent>
@@ -274,7 +402,13 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {customers.map((customer) => (
+                    {customers
+                      .filter((customer) =>
+                        customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        customer.nationalCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        customer.phone.toLowerCase().includes(searchQuery.toLowerCase())
+                      )
+                      .map((customer) => (
                       <TableRow key={customer.id}>
                         <TableCell>{customer.name}</TableCell>
                         <TableCell>{customer.nationalCode}</TableCell>
@@ -284,10 +418,96 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         <TableCell>{getStatusBadge(customer.status)}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline" onClick={() => alert('Edit customer functionality not implemented yet.')}>
-                              <Edit className="h-4 w-4" />
+                            <EditCustomerForm customer={customer} onEditCustomer={handleEditCustomer} />
+                            <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => handleDeleteCustomer(customer.id)}>
+                              <Trash2 className="h-4 w-4" />
                             </Button>
-                            <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => alert('Delete customer functionality not implemented yet.')}>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* FAQ Management */}
+          <TabsContent value="faq">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>مدیریت سوالات متداول</CardTitle>
+                    <CardDescription>
+                      لیست سوالات متداول و مدیریت آنها
+                    </CardDescription>
+                  </div>
+                  <AddFaqForm onAddFaq={handleAddFaq} />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>سوال</TableHead>
+                      <TableHead>پاسخ</TableHead>
+                      <TableHead>عملیات</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {faqs.map((faq) => (
+                      <TableRow key={faq.id}>
+                        <TableCell>{faq.question}</TableCell>
+                        <TableCell>{faq.answer}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <EditFaqForm faq={faq} onEditFaq={handleEditFaq} />
+                            <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => handleDeleteFaq(faq.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Blog Management */}
+          <TabsContent value="blog">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>مدیریت وبلاگ</CardTitle>
+                    <CardDescription>
+                      لیست پست‌های وبلاگ و مدیریت آنها
+                    </CardDescription>
+                  </div>
+                  <AddBlogPostForm onAddBlogPost={handleAddBlogPost} />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>عنوان</TableHead>
+                      <TableHead>تاریخ انتشار</TableHead>
+                      <TableHead>عملیات</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {blogPosts.map((post) => (
+                      <TableRow key={post.id}>
+                        <TableCell>{post.title}</TableCell>
+                        <TableCell>{post.publishDate}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <EditBlogPostForm post={post} onEditBlogPost={handleEditBlogPost} />
+                            <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => handleDeleteBlogPost(post.id)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -311,10 +531,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       لیست بیمه‌نامه‌ها و وضعیت آنها
                     </CardDescription>
                   </div>
-                  <Button onClick={() => alert('Issue policy functionality not implemented yet.')}>
-                    <Plus className="h-4 w-4 ml-2" />
-                    صدور بیمه‌نامه
-                  </Button>
+                  <IssuePolicyForm customers={customers} onIssuePolicy={handleIssuePolicy} />
                 </div>
               </CardHeader>
               <CardContent>
@@ -345,11 +562,13 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         <TableCell>{getStatusBadge(policy.status)}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline" onClick={() => alert('Edit policy functionality not implemented yet.')}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => alert('View policy functionality not implemented yet.')}>
-                              مشاهده
+                            <EditPolicyForm customers={customers} policy={policy} onEditPolicy={handleEditPolicy} />
+                            <ViewPolicyDetails policy={policy} />
+                            <Button size="sm" onClick={() => {
+                              setSelectedPolicyId(policy.id);
+                              setActiveTab('installments');
+                            }}>
+                              اقساط
                             </Button>
                           </div>
                         </TableCell>
@@ -365,10 +584,20 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           <TabsContent value="installments">
             <Card>
               <CardHeader>
-                <CardTitle>مدیریت اقساط</CardTitle>
-                <CardDescription>
-                  پیگیری اقساط و معوقات
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>مدیریت اقساط</CardTitle>
+                    <CardDescription>
+                      پیگیری اقساط و معوقات
+                    </CardDescription>
+                  </div>
+                  {selectedPolicyId && (
+                    <AddInstallmentForm
+                      policy={policies.find((p) => p.id === selectedPolicyId)}
+                      onAddInstallment={handleAddInstallment}
+                    />
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -384,7 +613,9 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {recentInstallments.map((installment) => (
+                    {installments
+                      .filter((installment) => selectedPolicyId ? installment.policyId === selectedPolicyId : true)
+                      .map((installment) => (
                       <TableRow key={installment.id}>
                         <TableCell>{installment.customerName}</TableCell>
                         <TableCell>{installment.policyType}</TableCell>
@@ -400,14 +631,11 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         <TableCell>{getStatusBadge(installment.status)}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            {installment.status === 'معوق' && (
-                              <Button size="sm" className="bg-red-600 hover:bg-red-700" onClick={() => alert('Follow up functionality not implemented yet.')}>
-                                پیگیری
+                            {installment.status !== 'پرداخت شده' && (
+                              <Button size="sm" onClick={() => handleMarkAsPaid(installment.id)}>
+                                پرداخت شد
                               </Button>
                             )}
-                            <Button size="sm" variant="outline" onClick={() => alert('Details functionality not implemented yet.')}>
-                              جزئیات
-                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>

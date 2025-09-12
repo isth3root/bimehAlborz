@@ -1,3 +1,4 @@
+import { ViewPolicyDetails } from "./ViewPolicyDetails";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -21,6 +22,21 @@ interface CustomerDashboardProps {
 }
 
 export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
+  const handleDownload = (file: File) => {
+    if (file) {
+      const url = URL.createObjectURL(file);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } else {
+      alert('No PDF file available for this policy.');
+    }
+  };
+
   const insurancePolicies = [
     {
       id: '12345',
@@ -259,13 +275,11 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                         )}
                       </div>
                       <div className="mt-4 flex gap-2">
-                        <Button size="sm" variant="outline" className="flex-1" onClick={() => alert('Download functionality not implemented yet.')}>
+                        <Button size="sm" variant="outline" className="flex-1" onClick={() => handleDownload(policy.pdfFile)}>
                           <Download className="h-4 w-4 ml-2" />
                           دانلود
                         </Button>
-                        <Button size="sm" className="flex-1" onClick={() => alert('Details functionality not implemented yet.')}>
-                          جزئیات
-                        </Button>
+                        <ViewPolicyDetails policy={policy} />
                       </div>
                     </CardContent>
                   </Card>

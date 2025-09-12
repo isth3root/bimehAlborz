@@ -11,16 +11,21 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { ServicesPage } from './pages/ServicesPage';
 import { AboutUsPage } from './pages/AboutUsPage';
 import { ContactUsPage } from './pages/ContactUsPage';
+import { ServiceDetailsPage } from './pages/ServiceDetailsPage';
 
-type Page = 'home' | 'login' | 'customer-dashboard' | 'admin-dashboard' | 'services' | 'about-us' | 'contact-us';
+type Page = 'home' | 'login' | 'customer-dashboard' | 'admin-dashboard' | 'services' | 'about-us' | 'contact-us' | 'service-details';
 type UserType = 'customer' | 'admin' | null;
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [userType, setUserType] = useState<UserType>(null);
+  const [selectedService, setSelectedService] = useState<any>(null);
 
-  const handleNavigate = (page: string) => {
+  const handleNavigate = (page: string, data?: any) => {
     setCurrentPage(page as Page);
+    if (page === 'service-details') {
+      setSelectedService(data);
+    }
   };
 
   const handleLogin = (type: 'customer' | 'admin') => {
@@ -57,12 +62,16 @@ export default function App() {
     return <ContactUsPage />;
   }
 
+  if (currentPage === 'service-details' && selectedService) {
+    return <ServiceDetailsPage service={selectedService} />;
+  }
+
   // Homepage
   return (
     <div className="min-h-screen bg-white">
-      <Header onNavigate={handleNavigate} />
+      <Header onNavigate={handleNavigate} currentPage={currentPage} />
       <HeroSlider onNavigate={handleNavigate} />
-      <ServicesSection />
+      <ServicesSection onNavigate={handleNavigate} />
       <BlogSection />
       <FAQSection />
       <Footer />
