@@ -93,7 +93,8 @@ export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
               <p className="text-sm text-gray-600">
                 رمز عبور خود را فراموش کرده‌اید؟
               </p>
-              <Button variant="link" className="text-green-600 hover:text-green-700 p-0">
+              {/* TODO: Implement password recovery functionality */}
+              <Button variant="link" className="text-green-600 hover:text-green-700 p-0" onClick={() => {}}>
                 بازیابی رمز عبور
               </Button>
             </div>

@@ -142,7 +142,7 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
             </div>
             
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" onClick={() => alert('Support functionality not implemented yet.')}>
                 <Phone className="h-4 w-4 ml-2" />
                 پشتیبانی
               </Button>
@@ -259,11 +259,11 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                         )}
                       </div>
                       <div className="mt-4 flex gap-2">
-                        <Button size="sm" variant="outline" className="flex-1">
+                        <Button size="sm" variant="outline" className="flex-1" onClick={() => alert('Download functionality not implemented yet.')}>
                           <Download className="h-4 w-4 ml-2" />
                           دانلود
                         </Button>
-                        <Button size="sm" className="flex-1">
+                        <Button size="sm" className="flex-1" onClick={() => alert('Details functionality not implemented yet.')}>
                           جزئیات
                         </Button>
                       </div>
@@ -307,12 +307,12 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                     <TableCell>{getPaymentStatusBadge(installment.status)}</TableCell>
                     <TableCell>
                       {installment.status === 'معوق' && (
-                        <Button size="sm" className="bg-red-600 hover:bg-red-700">
+                        <Button size="sm" className="bg-red-600 hover:bg-red-700" onClick={() => alert('Payment functionality not implemented yet.')}>
                           پرداخت
                         </Button>
                       )}
                       {installment.status === 'پرداخت شده' && (
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="outline" onClick={() => alert('Receipt functionality not implemented yet.')}>
                           رسید
                         </Button>
                       )}
