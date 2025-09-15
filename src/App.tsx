@@ -23,7 +23,7 @@ function Layout() {
 }
 
 function AppContent() {
-  const [userType, setUserType] = useState(null);
+  const [userType, setUserType] = useState<'customer' | 'admin' | null>(null);
   const navigate = useNavigate();
 
   const handleLogin = (type: 'customer' | 'admin') => {
