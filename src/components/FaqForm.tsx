@@ -13,21 +13,22 @@ import {
   DialogFooter,
   DialogClose,
 } from "./ui/dialog";
-import { Edit } from 'lucide-react';
+import { Plus, Edit } from 'lucide-react';
 
-interface EditFaqFormProps {
-  faq: any;
-  onEditFaq: (faq: any) => void;
+interface FaqFormProps {
+  faq?: any;
+  onSave: (faq: any) => void;
 }
 
-export function EditFaqForm({ faq, onEditFaq }: EditFaqFormProps) {
-  const [question, setQuestion] = useState(faq.question);
-  const [answer, setAnswer] = useState(faq.answer);
+export function FaqForm({ faq, onSave }: FaqFormProps) {
+  const [question, setQuestion] = useState(faq?.question || '');
+  const [answer, setAnswer] = useState(faq?.answer || '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onEditFaq({
+    onSave({
       ...faq,
+      id: faq?.id || Math.random().toString(),
       question,
       answer,
     });
@@ -36,15 +37,22 @@ export function EditFaqForm({ faq, onEditFaq }: EditFaqFormProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
-          <Edit className="h-4 w-4" />
-        </Button>
+        {faq ? (
+          <Button size="sm" variant="outline">
+            <Edit className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button>
+            <Plus className="h-4 w-4 ml-2" />
+            افزودن سوال جدید
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>ویرایش سوال</DialogTitle>
+          <DialogTitle>{faq ? 'ویرایش سوال' : 'افزودن سوال جدید'}</DialogTitle>
           <DialogDescription>
-            اطلاعات سوال را ویرایش کنید
+            {faq ? 'اطلاعات سوال را ویرایش کنید' : 'اطلاعات سوال جدید را وارد کنید'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -74,7 +82,7 @@ export function EditFaqForm({ faq, onEditFaq }: EditFaqFormProps) {
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="submit">ذخیره</Button>
+              <Button type="submit">{faq ? 'ذخیره' : 'افزودن'}</Button>
             </DialogClose>
           </DialogFooter>
         </form>

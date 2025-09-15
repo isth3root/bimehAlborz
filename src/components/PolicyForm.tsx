@@ -12,50 +12,64 @@ import {
   DialogFooter,
   DialogClose,
 } from "./ui/dialog";
-import { Edit } from 'lucide-react';
+import { Plus, Edit } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
-interface EditPolicyFormProps {
+interface PolicyFormProps {
   customers: any[];
-  policy: any;
-  onEditPolicy: (policy: any) => void;
+  policy?: any;
+  onSave: (policy: any) => void;
 }
 
-export function EditPolicyForm({ customers, policy, onEditPolicy }: EditPolicyFormProps) {
-  const [customerName, setCustomerName] = useState(policy.customerName);
-  const [type, setType] = useState(policy.type);
-  const [vehicle, setVehicle] = useState(policy.vehicle);
-  const [startDate, setStartDate] = useState(policy.startDate);
-  const [endDate, setEndDate] = useState(policy.endDate);
-  const [premium, setPremium] = useState(policy.premium);
-  const [pdfFile, setPdfFile] = useState<File | null>(policy.pdfFile);
+export function PolicyForm({ customers, policy, onSave }: PolicyFormProps) {
+  const [customerName, setCustomerName] = useState(policy?.customerName || '');
+  const [type, setType] = useState(policy?.type || '');
+  const [vehicle, setVehicle] = useState(policy?.vehicle || '');
+  const [startDate, setStartDate] = useState(policy?.startDate || '');
+  const [endDate, setEndDate] = useState(policy?.endDate || '');
+  const [premium, setPremium] = useState(policy?.premium || '');
+  const [pdfUrl, setPdfUrl] = useState(policy?.pdfUrl || '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onEditPolicy({
+    const urlRegex = /^(ftp|http|https):\/\/[^ "]+$/;
+    if (pdfUrl && !urlRegex.test(pdfUrl)) {
+      alert('Please enter a valid URL for the PDF.');
+      return;
+    }
+    onSave({
       ...policy,
+      id: policy?.id || Math.random().toString(),
       customerName,
       type,
       vehicle,
       startDate,
       endDate,
       premium,
-      pdfFile,
+      pdfUrl,
+      status: policy?.status || 'فعال',
     });
   };
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
-          <Edit className="h-4 w-4" />
-        </Button>
+        {policy ? (
+          <Button size="sm" variant="outline">
+            <Edit className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button>
+            <Plus className="h-4 w-4 ml-2" />
+            صدور بیمه‌نامه
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>ویرایش بیمه‌نامه</DialogTitle>
+          <DialogTitle>{policy ? 'ویرایش بیمه‌نامه' : 'صدور بیمه‌نامه جدید'}</DialogTitle>
           <DialogDescription>
-            اطلاعات بیمه‌نامه را ویرایش کنید
+            {policy ? 'اطلاعات بیمه‌نامه را ویرایش کنید' : 'اطلاعات بیمه‌نامه جدید را وارد کنید'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -140,15 +154,15 @@ export function EditPolicyForm({ customers, policy, onEditPolicy }: EditPolicyFo
                 id="pdfUrl"
                 type="text"
                 placeholder="https://example.com/policy.pdf"
-                value={pdfFile}
-                onChange={(e) => setPdfFile(e.target.value)}
+                value={pdfUrl}
+                onChange={(e) => setPdfUrl(e.target.value)}
                 className="col-span-3"
               />
             </div>
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="submit">ذخیره</Button>
+              <Button type="submit">{policy ? 'ذخیره' : 'صدور'}</Button>
             </DialogClose>
           </DialogFooter>
         </form>

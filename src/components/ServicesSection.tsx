@@ -1,60 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
-import { Car, Shield, Flame, Users, Home, Briefcase } from "lucide-react";
 import { Link } from "react-router-dom";
+import { services } from '../data';
 
 export function ServicesSection() {
-  const services = [
-    {
-      id: 1,
-      title: "بیمه شخص ثالث",
-      description: "پوشش کامل خسارات وارده به اشخاص ثالث طبق قانون",
-      icon: Car,
-      features: ["پوشش خسارات جانی", "پوشش خسارات مالی", "پرداخت سریع غرامت"],
-      color: "text-blue-600"
-    },
-    {
-      id: 2,
-      title: "بیمه بدنه خودرو",
-      description: "محافظت از خودروی شما در برابر تصادف، سرقت و خسارات",
-      icon: Shield,
-      features: ["پوشش تصادف", "بیمه سرقت", "خسارات طبیعی"],
-      color: "text-green-600"
-    },
-    {
-      id: 3,
-      title: "بیمه آتش‌سوزی",
-      description: "حفاظت از اموال در برابر آتش‌سوزی و حوادث طبیعی",
-      icon: Flame,
-      features: ["آتش‌سوزی ساختمان", "خسارات طبیعی", "اموال منقول"],
-      color: "text-red-600"
-    },
-    {
-      id: 4,
-      title: "بیمه مسئولیت مدنی",
-      description: "پوشش مسئولیت‌های حقوقی و مالی شما",
-      icon: Users,
-      features: ["مسئولیت شخصی", "مسئولیت حرفه‌ای", "پوشش حقوقی"],
-      color: "text-purple-600"
-    },
-    {
-      id: 5,
-      title: "بیمه منزل",
-      description: "حفاظت کامل از خانه و وسایل شخصی",
-      icon: Home,
-      features: ["ساختمان", "اموال منقول", "مسئولیت مدنی"],
-      color: "text-orange-600"
-    },
-    {
-      id: 6,
-      title: "بیمه تجاری",
-      description: "راه‌حل‌های بیمه‌ای برای کسب و کارها",
-      icon: Briefcase,
-      features: ["بیمه کارخانه", "بیمه کارکنان", "تجهیزات"],
-      color: "text-indigo-600"
-    }
-  ];
-
   return (
     <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">

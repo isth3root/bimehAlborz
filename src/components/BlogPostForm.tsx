@@ -13,39 +13,47 @@ import {
   DialogFooter,
   DialogClose,
 } from "./ui/dialog";
-import { Plus } from 'lucide-react';
+import { Plus, Edit } from 'lucide-react';
 
-interface AddBlogPostFormProps {
-  onAddBlogPost: (post: any) => void;
+interface BlogPostFormProps {
+  post?: any;
+  onSave: (post: any) => void;
 }
 
-export function AddBlogPostForm({ onAddBlogPost }: AddBlogPostFormProps) {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+export function BlogPostForm({ post, onSave }: BlogPostFormProps) {
+  const [title, setTitle] = useState(post?.title || '');
+  const [content, setContent] = useState(post?.content || '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onAddBlogPost({
-      id: Math.random().toString(),
+    onSave({
+      ...post,
+      id: post?.id || Math.random().toString(),
       title,
       content,
-      publishDate: new Date().toLocaleDateString('fa-IR'),
+      publishDate: post?.publishDate || new Date().toLocaleDateString('fa-IR'),
     });
   };
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 ml-2" />
-          افزودن پست جدید
-        </Button>
+        {post ? (
+          <Button size="sm" variant="outline">
+            <Edit className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button>
+            <Plus className="h-4 w-4 ml-2" />
+            افزودن پست جدید
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>افزودن پست جدید</DialogTitle>
+          <DialogTitle>{post ? 'ویرایش پست وبلاگ' : 'افزودن پست جدید'}</DialogTitle>
           <DialogDescription>
-            اطلاعات پست جدید را وارد کنید
+            {post ? 'اطلاعات پست را ویرایش کنید' : 'اطلاعات پست جدید را وارد کنید'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -75,7 +83,7 @@ export function AddBlogPostForm({ onAddBlogPost }: AddBlogPostFormProps) {
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="submit">افزودن</Button>
+              <Button type="submit">{post ? 'ذخیره' : 'افزودن'}</Button>
             </DialogClose>
           </DialogFooter>
         </form>
