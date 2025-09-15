@@ -12,45 +12,53 @@ import {
   DialogFooter,
   DialogClose,
 } from "./ui/dialog";
-import { Plus } from 'lucide-react';
+import { Plus, Edit } from 'lucide-react';
 
-interface AddCustomerFormProps {
-  onAddCustomer: (customer: any) => void;
+interface CustomerFormProps {
+  customer?: any;
+  onSave: (customer: any) => void;
 }
 
-export function AddCustomerForm({ onAddCustomer }: AddCustomerFormProps) {
-  const [name, setName] = useState('');
-  const [nationalCode, setNationalCode] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
+export function CustomerForm({ customer, onSave }: CustomerFormProps) {
+  const [name, setName] = useState(customer?.name || '');
+  const [nationalCode, setNationalCode] = useState(customer?.nationalCode || '');
+  const [phone, setPhone] = useState(customer?.phone || '');
+  const [email, setEmail] = useState(customer?.email || '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onAddCustomer({
-      id: Math.random().toString(),
+    onSave({
+      ...customer,
+      id: customer?.id || Math.random().toString(),
       name,
       nationalCode,
       phone,
       email,
-      joinDate: new Date().toLocaleDateString('fa-IR'),
-      activePolicies: 0,
-      status: 'فعال',
+      joinDate: customer?.joinDate || new Date().toLocaleDateString('fa-IR'),
+      activePolicies: customer?.activePolicies || 0,
+      status: customer?.status || 'فعال',
     });
   };
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 ml-2" />
-          افزودن مشتری
-        </Button>
+        {customer ? (
+          <Button size="sm" variant="outline">
+            <Edit className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button>
+            <Plus className="h-4 w-4 ml-2" />
+            افزودن مشتری
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>افزودن مشتری جدید</DialogTitle>
+          <DialogTitle>{customer ? 'ویرایش اطلاعات مشتری' : 'افزودن مشتری جدید'}</DialogTitle>
           <DialogDescription>
-            اطلاعات مشتری جدید را وارد کنید
+            {customer ? 'اطلاعات مشتری را ویرایش کنید' : 'اطلاعات مشتری جدید را وارد کنید'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -103,7 +111,7 @@ export function AddCustomerForm({ onAddCustomer }: AddCustomerFormProps) {
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="submit">افزودن</Button>
+              <Button type="submit">{customer ? 'ذخیره' : 'افزودن'}</Button>
             </DialogClose>
           </DialogFooter>
         </form>

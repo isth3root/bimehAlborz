@@ -31,7 +31,7 @@ export const customers = [
   }
 ];
 
-import { Car, Shield, Flame } from "lucide-react";
+import { Car, Shield, Flame, Users, Home, Briefcase } from "lucide-react";
 
 export const policies = [
   {

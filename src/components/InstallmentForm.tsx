@@ -12,44 +12,52 @@ import {
   DialogFooter,
   DialogClose,
 } from "./ui/dialog";
-import { Plus } from 'lucide-react';
+import { Plus, Edit } from 'lucide-react';
 
-interface AddInstallmentFormProps {
-  policy: any;
-  onAddInstallment: (installment: any) => void;
+interface InstallmentFormProps {
+  installment?: any;
+  policy?: any;
+  onSave: (installment: any) => void;
 }
 
-export function AddInstallmentForm({ policy, onAddInstallment }: AddInstallmentFormProps) {
-  const [amount, setAmount] = useState('');
-  const [dueDate, setDueDate] = useState('');
+export function InstallmentForm({ installment, policy, onSave }: InstallmentFormProps) {
+  const [amount, setAmount] = useState(installment?.amount || '');
+  const [dueDate, setDueDate] = useState(installment?.dueDate || '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onAddInstallment({
-      id: Math.random().toString(),
-      policyId: policy.id,
-      customerName: policy.customerName,
-      policyType: policy.type,
+    onSave({
+      ...installment,
+      id: installment?.id || Math.random().toString(),
+      policyId: installment?.policyId || policy.id,
+      customerName: installment?.customerName || policy.customerName,
+      policyType: installment?.policyType || policy.type,
       amount,
       dueDate,
-      status: 'آینده',
-      daysOverdue: 0,
+      status: installment?.status || 'آینده',
+      daysOverdue: installment?.daysOverdue || 0,
     });
   };
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 ml-2" />
-          افزودن قسط
-        </Button>
+        {installment ? (
+          <Button size="sm" variant="outline">
+            <Edit className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button>
+            <Plus className="h-4 w-4 ml-2" />
+            افزودن قسط
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>افزودن قسط جدید</DialogTitle>
+          <DialogTitle>{installment ? 'ویرایش قسط' : 'افزودن قسط جدید'}</DialogTitle>
           <DialogDescription>
-            اطلاعات قسط جدید را وارد کنید
+            {installment ? 'اطلاعات قسط را ویرایش کنید' : 'اطلاعات قسط جدید را وارد کنید'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -79,7 +87,7 @@ export function AddInstallmentForm({ policy, onAddInstallment }: AddInstallmentF
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="submit">افزودن</Button>
+              <Button type="submit">{installment ? 'ذخیره' : 'افزودن'}</Button>
             </DialogClose>
           </DialogFooter>
         </form>

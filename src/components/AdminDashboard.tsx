@@ -1,35 +1,23 @@
 import { useState } from 'react';
+import { useState } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { Input } from "./ui/input";
-import { 
-  Users, 
-  FileText, 
-  CreditCard, 
-  TrendingUp,
-  Search,
-  Plus,
-  Edit,
-  Trash2,
+import {
+  Users,
+  FileText,
+  CreditCard,
   LogOut,
   Settings,
-  DollarSign,
-  Calendar
+  DollarSign
 } from "lucide-react";
-import { AddCustomerForm } from './AddCustomerForm';
-import { EditCustomerForm } from './EditCustomerForm';
-import { IssuePolicyForm } from './IssuePolicyForm';
-import { EditPolicyForm } from './EditPolicyForm';
-import { ViewPolicyDetails } from './ViewPolicyDetails';
-import { AddInstallmentForm } from './AddInstallmentForm';
-import { AddBlogPostForm } from './AddBlogPostForm';
-import { EditBlogPostForm } from './EditBlogPostForm';
-import { AddFaqForm } from './AddFaqForm';
-import { EditFaqForm } from './EditFaqForm';
+import { CustomerManagement } from './admin/CustomerManagement';
+import { PolicyManagement } from './admin/PolicyManagement';
+import { InstallmentManagement } from './admin/InstallmentManagement';
+import { BlogManagement } from './admin/BlogManagement';
+import { FaqManagement } from './admin/FaqManagement';
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -64,6 +52,12 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     }
   };
 
+  const handleDeletePolicy = (policyId: string) => {
+    if (window.confirm('Are you sure you want to delete this policy?')) {
+      setPolicies(policies.filter((policy) => policy.id !== policyId));
+    }
+  };
+
   const handleIssuePolicy = (policy: any) => {
     setPolicies([...policies, policy]);
   };
@@ -88,6 +82,20 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           : installment
       )
     );
+  };
+
+  const handleEditInstallment = (updatedInstallment: any) => {
+    setInstallments(
+      installments.map((installment) =>
+        installment.id === updatedInstallment.id ? updatedInstallment : installment
+      )
+    );
+  };
+
+  const handleDeleteInstallment = (installmentId: string) => {
+    if (window.confirm('Are you sure you want to delete this installment?')) {
+      setInstallments(installments.filter((installment) => installment.id !== installmentId));
+    }
   };
 
   const handleAddBlogPost = (post: any) => {
@@ -158,7 +166,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <p className="text-sm text-gray-600">سامانه مدیریت بیمه البرز</p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="sm" onClick={() => {}}>
                 <Settings className="h-4 w-4 ml-2" />
@@ -194,7 +202,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -207,7 +215,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -220,7 +228,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -245,288 +253,60 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             <TabsTrigger value="faq">مدیریت سوالات متداول</TabsTrigger>
           </TabsList>
 
-          {/* Customers Management */}
           <TabsContent value="customers">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>مدیریت مشتریان</CardTitle>
-                    <CardDescription>
-                      لیست مشتریان و مدیریت اطلاعات آنها
-                    </CardDescription>
-                  </div>
-                  <AddCustomerForm onAddCustomer={handleAddCustomer} />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="mb-4">
-                  <div className="relative">
-                    <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="جستجو در مشتریان..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pr-10"
-                    />
-                  </div>
-                </div>
-                
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>نام و نام خانوادگی</TableHead>
-                      <TableHead>کد ملی</TableHead>
-                      <TableHead>شماره تماس</TableHead>
-                      <TableHead>تاریخ عضویت</TableHead>
-                      <TableHead>بیمه‌نامه‌های فعال</TableHead>
-                      <TableHead>وضعیت</TableHead>
-                      <TableHead>عملیات</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {customers
-                      .filter((customer) =>
-                        customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        customer.nationalCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        customer.phone.toLowerCase().includes(searchQuery.toLowerCase())
-                      )
-                      .map((customer) => (
-                      <TableRow key={customer.id}>
-                        <TableCell>{customer.name}</TableCell>
-                        <TableCell>{customer.nationalCode}</TableCell>
-                        <TableCell>{customer.phone}</TableCell>
-                        <TableCell>{customer.joinDate}</TableCell>
-                        <TableCell>{customer.activePolicies}</TableCell>
-                        <TableCell>{getStatusBadge(customer.status)}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <EditCustomerForm customer={customer} onEditCustomer={handleEditCustomer} />
-                            <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => handleDeleteCustomer(customer.id)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            <CustomerManagement
+              customers={customers}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              handleAddCustomer={handleAddCustomer}
+              handleEditCustomer={handleEditCustomer}
+              handleDeleteCustomer={handleDeleteCustomer}
+              getStatusBadge={getStatusBadge}
+            />
           </TabsContent>
 
-          {/* FAQ Management */}
           <TabsContent value="faq">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>مدیریت سوالات متداول</CardTitle>
-                    <CardDescription>
-                      لیست سوالات متداول و مدیریت آنها
-                    </CardDescription>
-                  </div>
-                  <AddFaqForm onAddFaq={handleAddFaq} />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>سوال</TableHead>
-                      <TableHead>پاسخ</TableHead>
-                      <TableHead>عملیات</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {faqs.map((faq) => (
-                      <TableRow key={faq.id}>
-                        <TableCell>{faq.question}</TableCell>
-                        <TableCell>{faq.answer}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <EditFaqForm faq={faq} onEditFaq={handleEditFaq} />
-                            <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => handleDeleteFaq(faq.id)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            <FaqManagement
+              faqs={faqs}
+              handleAddFaq={handleAddFaq}
+              handleEditFaq={handleEditFaq}
+              handleDeleteFaq={handleDeleteFaq}
+            />
           </TabsContent>
 
-          {/* Blog Management */}
           <TabsContent value="blog">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>مدیریت وبلاگ</CardTitle>
-                    <CardDescription>
-                      لیست پست‌های وبلاگ و مدیریت آنها
-                    </CardDescription>
-                  </div>
-                  <AddBlogPostForm onAddBlogPost={handleAddBlogPost} />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>عنوان</TableHead>
-                      <TableHead>تاریخ انتشار</TableHead>
-                      <TableHead>عملیات</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {blogPosts.map((post) => (
-                      <TableRow key={post.id}>
-                        <TableCell>{post.title}</TableCell>
-                        <TableCell>{post.publishDate}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <EditBlogPostForm post={post} onEditBlogPost={handleEditBlogPost} />
-                            <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700" onClick={() => handleDeleteBlogPost(post.id)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            <BlogManagement
+              blogPosts={blogPosts}
+              handleAddBlogPost={handleAddBlogPost}
+              handleEditBlogPost={handleEditBlogPost}
+              handleDeleteBlogPost={handleDeleteBlogPost}
+            />
           </TabsContent>
 
-          {/* Policies Management */}
           <TabsContent value="policies">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>مدیریت بیمه‌نامه‌ها</CardTitle>
-                    <CardDescription>
-                      لیست بیمه‌نامه‌ها و وضعیت آنها
-                    </CardDescription>
-                  </div>
-                  <IssuePolicyForm customers={customers} onIssuePolicy={handleIssuePolicy} />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>شماره بیمه‌نامه</TableHead>
-                      <TableHead>نام مشتری</TableHead>
-                      <TableHead>نوع بیمه</TableHead>
-                      <TableHead>موضوع بیمه</TableHead>
-                      <TableHead>تاریخ شروع</TableHead>
-                      <TableHead>تاریخ انقضا</TableHead>
-                      <TableHead>حق بیمه</TableHead>
-                      <TableHead>وضعیت</TableHead>
-                      <TableHead>عملیات</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {policies.map((policy) => (
-                      <TableRow key={policy.id}>
-                        <TableCell>{policy.id}</TableCell>
-                        <TableCell>{policy.customerName}</TableCell>
-                        <TableCell>{policy.type}</TableCell>
-                        <TableCell>{policy.vehicle}</TableCell>
-                        <TableCell>{policy.startDate}</TableCell>
-                        <TableCell>{policy.endDate}</TableCell>
-                        <TableCell>{policy.premium}</TableCell>
-                        <TableCell>{getStatusBadge(policy.status)}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <EditPolicyForm customers={customers} policy={policy} onEditPolicy={handleEditPolicy} />
-                            <ViewPolicyDetails policy={policy} />
-                            <Button size="sm" onClick={() => {
-                              setSelectedPolicyId(policy.id);
-                              setActiveTab('installments');
-                            }}>
-                              اقساط
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            <PolicyManagement
+              policies={policies}
+              customers={customers}
+              handleIssuePolicy={handleIssuePolicy}
+              handleEditPolicy={handleEditPolicy}
+              handleDeletePolicy={handleDeletePolicy}
+              setSelectedPolicyId={setSelectedPolicyId}
+              setActiveTab={setActiveTab}
+              getStatusBadge={getStatusBadge}
+            />
           </TabsContent>
 
-          {/* Installments Management */}
           <TabsContent value="installments">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>مدیریت اقساط</CardTitle>
-                    <CardDescription>
-                      پیگیری اقساط و معوقات
-                    </CardDescription>
-                  </div>
-                  {selectedPolicyId && (
-                    <AddInstallmentForm
-                      policy={policies.find((p) => p.id === selectedPolicyId)}
-                      onAddInstallment={handleAddInstallment}
-                    />
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>نام مشتری</TableHead>
-                      <TableHead>نوع بیمه</TableHead>
-                      <TableHead>مبلغ قسط</TableHead>
-                      <TableHead>سررسید</TableHead>
-                      <TableHead>تعداد روز تاخیر</TableHead>
-                      <TableHead>وضعیت</TableHead>
-                      <TableHead>عملیات</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {installments
-                      .filter((installment) => selectedPolicyId ? installment.policyId === selectedPolicyId : true)
-                      .map((installment) => (
-                      <TableRow key={installment.id}>
-                        <TableCell>{installment.customerName}</TableCell>
-                        <TableCell>{installment.policyType}</TableCell>
-                        <TableCell>{installment.amount}</TableCell>
-                        <TableCell>{installment.dueDate}</TableCell>
-                        <TableCell>
-                          {installment.daysOverdue > 0 ? (
-                            <span className="text-red-600">{installment.daysOverdue} روز</span>
-                          ) : (
-                            '-'
-                          )}
-                        </TableCell>
-                        <TableCell>{getStatusBadge(installment.status)}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            {installment.status !== 'پرداخت شده' && (
-                              <Button size="sm" onClick={() => handleMarkAsPaid(installment.id)}>
-                                پرداخت شد
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            <InstallmentManagement
+              installments={installments}
+              selectedPolicyId={selectedPolicyId}
+              policies={policies}
+              handleAddInstallment={handleAddInstallment}
+              handleEditInstallment={handleEditInstallment}
+              handleDeleteInstallment={handleDeleteInstallment}
+              handleMarkAsPaid={handleMarkAsPaid}
+              getStatusBadge={getStatusBadge}
+            />
           </TabsContent>
         </Tabs>
       </div>
