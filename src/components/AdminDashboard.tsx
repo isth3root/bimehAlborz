@@ -14,6 +14,9 @@ import { PriceInput } from "./PriceInput";
 import { useBlogs } from '../hooks/useBlogs';
 import { motion } from 'framer-motion';
 import type { Blog } from '../data/blogsData';
+import { InputDatePicker } from 'jalaali-react-date-picker';
+import "jalaali-react-date-picker/lib/styles/index.css";
+import moment from 'moment';
 import {
   Users,
   FileText,
@@ -711,12 +714,22 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           <Input id="policy-vehicle" value={formDataPolicy.vehicle} onChange={(e) => setFormDataPolicy({...formDataPolicy, vehicle: e.target.value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
-                          <Label className="text-right">تاریخ شروع</Label>
-                          <PersianDateInput value={formDataPolicy.startDate} onChange={(value) => setFormDataPolicy({...formDataPolicy, startDate: value})} className="col-span-3" />
+                          <Label htmlFor="policy-startDate" className="text-right">تاریخ شروع</Label>
+                          <InputDatePicker
+                            value={formDataPolicy.startDate ? moment(formDataPolicy.startDate, 'jYYYY/jMM/jDD') : null}
+                            onChange={(moment) => setFormDataPolicy({ ...formDataPolicy, startDate: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
+                            className="col-span-3"
+                            responsive="auto"
+                          />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
-                          <Label className="text-right">تاریخ انقضا</Label>
-                          <PersianDateInput value={formDataPolicy.endDate} onChange={(value) => setFormDataPolicy({...formDataPolicy, endDate: value})} className="col-span-3" />
+                          <Label htmlFor="policy-endDate" className="text-right">تاریخ انقضا</Label>
+                          <InputDatePicker
+                            value={formDataPolicy.endDate ? moment(formDataPolicy.endDate, 'jYYYY/jMM/jDD') : null}
+                            onChange={(moment) => setFormDataPolicy({ ...formDataPolicy, endDate: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
+                            className="col-span-3"
+                            responsive="auto"
+                          />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label className="text-right">حق بیمه (ریال)</Label>
@@ -825,12 +838,22 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       <Input id="edit-policy-vehicle" value={formDataPolicy.vehicle} onChange={(e) => setFormDataPolicy({...formDataPolicy, vehicle: e.target.value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label className="text-right">تاریخ شروع</Label>
-                      <PersianDateInput value={formDataPolicy.startDate} onChange={(value) => setFormDataPolicy({...formDataPolicy, startDate: value})} className="col-span-3" />
+                      <Label htmlFor="edit-policy-startDate" className="text-right">تاریخ شروع</Label>
+                      <InputDatePicker
+                        value={formDataPolicy.startDate ? moment(formDataPolicy.startDate, 'jYYYY/jMM/jDD') : null}
+                        onChange={(moment) => setFormDataPolicy({ ...formDataPolicy, startDate: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
+                        className="col-span-3"
+                        responsive="auto"
+                      />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label className="text-right">تاریخ انقضا</Label>
-                      <PersianDateInput value={formDataPolicy.endDate} onChange={(value) => setFormDataPolicy({...formDataPolicy, endDate: value})} className="col-span-3" />
+                      <Label htmlFor="edit-policy-endDate" className="text-right">تاریخ انقضا</Label>
+                      <InputDatePicker
+                        value={formDataPolicy.endDate ? moment(formDataPolicy.endDate, 'jYYYY/jMM/jDD') : null}
+                        onChange={(moment) => setFormDataPolicy({ ...formDataPolicy, endDate: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
+                        className="col-span-3"
+                        responsive="auto"
+                      />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label className="text-right">حق بیمه (ریال)</Label>
@@ -886,8 +909,13 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           <PriceInput value={formDataInstallment.amount} onChange={(value) => setFormDataInstallment({...formDataInstallment, amount: value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
-                          <Label className="text-right">سررسید</Label>
-                          <PersianDateInput value={formDataInstallment.dueDate} onChange={(value) => setFormDataInstallment({...formDataInstallment, dueDate: value})} className="col-span-3" />
+                          <Label htmlFor="installment-dueDate" className="text-right">سررسید</Label>
+                          <InputDatePicker
+                            value={formDataInstallment.dueDate ? moment(formDataInstallment.dueDate, 'jYYYY/jMM/jDD') : null}
+                            onChange={(moment) => setFormDataInstallment({ ...formDataInstallment, dueDate: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
+                            className="col-span-3"
+                            responsive="auto"
+                          />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="installment-status" className="text-right">وضعیت</Label>
@@ -1006,8 +1034,13 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       <PriceInput value={formDataInstallment.amount} onChange={(value) => setFormDataInstallment({...formDataInstallment, amount: value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label className="text-right">سررسید</Label>
-                      <PersianDateInput value={formDataInstallment.dueDate} onChange={(value) => setFormDataInstallment({...formDataInstallment, dueDate: value})} className="col-span-3" />
+                      <Label htmlFor="edit-installment-dueDate" className="text-right">سررسید</Label>
+                      <InputDatePicker
+                        value={formDataInstallment.dueDate ? moment(formDataInstallment.dueDate, 'jYYYY/jMM/jDD') : null}
+                        onChange={(moment) => setFormDataInstallment({ ...formDataInstallment, dueDate: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
+                        className="col-span-3"
+                        responsive="auto"
+                      />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-installment-status" className="text-right">وضعیت</Label>
@@ -1075,8 +1108,13 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           <Input id="blog-author" value={formDataBlog.author} onChange={(e) => setFormDataBlog({...formDataBlog, author: e.target.value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
-                          <Label className="text-right">تاریخ</Label>
-                          <PersianDateInput value={formDataBlog.date} onChange={(value) => setFormDataBlog({...formDataBlog, date: value})} className="col-span-3" />
+                          <Label htmlFor="blog-date" className="text-right">تاریخ</Label>
+                          <InputDatePicker
+                            value={formDataBlog.date ? moment(formDataBlog.date, 'jYYYY/jMM/jDD') : null}
+                            onChange={(moment) => setFormDataBlog({ ...formDataBlog, date: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
+                            className="col-span-3"
+                            responsive="auto"
+                          />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="blog-image" className="text-right">تصویر</Label>
@@ -1181,8 +1219,13 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       <Input id="edit-blog-author" value={formDataBlog.author} onChange={(e) => setFormDataBlog({...formDataBlog, author: e.target.value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label className="text-right">تاریخ</Label>
-                      <PersianDateInput value={formDataBlog.date} onChange={(value) => setFormDataBlog({...formDataBlog, date: value})} className="col-span-3" />
+                      <Label htmlFor="edit-blog-date" className="text-right">تاریخ</Label>
+                      <InputDatePicker
+                        value={formDataBlog.date ? moment(formDataBlog.date, 'jYYYY/jMM/jDD') : null}
+                        onChange={(moment) => setFormDataBlog({ ...formDataBlog, date: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
+                        className="col-span-3"
+                        responsive="auto"
+                      />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-blog-image" className="text-right">تصویر</Label>
