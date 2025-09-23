@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -13,15 +13,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Input } from "./ui/input";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "./ui/dialog";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -34,23 +25,25 @@ import {
 } from "./ui/alert-dialog";
 import { Label } from "./ui/label";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "./ui/popover";
+
 import { PriceInput } from "./PriceInput";
 import { useBlogs } from "../hooks/useBlogs";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import type { Blog } from "../data/blogsData";
-import { WheelDatePicker } from "@buildix/wheel-datepicker";
-import "@buildix/wheel-datepicker/dist/index.css";
 import {
   Users,
   FileText,
@@ -61,7 +54,67 @@ import {
   Trash2,
   LogOut,
   DollarSign,
+  Calendar,
 } from "lucide-react";
+import { DatePicker } from "zaman";
+import moment from "moment-jalaali";
+import ReactDOM from "react-dom";
+
+// Client-only Persian date picker component using zaman
+const ClientOnlyDatePicker = ({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (date: string) => void;
+  placeholder: string;
+}) => {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Convert Persian date string to Date object
+  const parsePersianDate = (dateStr: string): Date | undefined => {
+    if (!dateStr) return undefined;
+    const m = moment(dateStr, "jYYYY/jMM/jDD");
+    return m.isValid() ? m.toDate() : undefined;
+  };
+
+  // Convert Date object to Persian date string
+  const formatPersianDate = (date: Date): string => {
+    return moment(date).format("jYYYY/jMM/jDD");
+  };
+
+  const handleDateChange = (e: { value: Date }) => {
+    const persianDate = formatPersianDate(e.value);
+    onChange(persianDate);
+  };
+
+  if (!isClient) {
+    return (
+      <div className="flex items-center gap-2 border rounded-md px-3 py-2 text-sm bg-white">
+        <Calendar className="h-4 w-4 text-gray-400" />
+        <span>{placeholder}</span>
+      </div>
+    );
+  }
+
+  return (
+    <DatePicker
+      defaultValue={parsePersianDate(value)}
+      onChange={handleDateChange}
+      className="w-full"
+      inputClass="flex items-center gap-2 border rounded-md px-3 py-2 text-sm bg-white cursor-pointer"
+      inputAttributes={{
+        placeholder: placeholder,
+        style: { direction: "rtl" },
+      }}
+    />
+  );
+};
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -141,8 +194,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     },
   ]);
 
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [formData, setFormData] = useState({
     name: "",
@@ -152,6 +203,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     email: "",
   });
   const [deleteCustomer, setDeleteCustomer] = useState<Customer | null>(null);
+  const [showCustomerForm, setShowCustomerForm] = useState(false);
 
   const [policies, setPolicies] = useState<Policy[]>([
     {
@@ -213,7 +265,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   ]);
 
   const [policySearchQuery, setPolicySearchQuery] = useState("");
-  const [isAddPolicyDialogOpen, setIsAddPolicyDialogOpen] = useState(false);
   const [isEditPolicyDialogOpen, setIsEditPolicyDialogOpen] = useState(false);
   const [editingPolicy, setEditingPolicy] = useState<Policy | null>(null);
   const [formDataPolicy, setFormDataPolicy] = useState({
@@ -227,9 +278,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     pdfFile: null as File | null,
   });
   const [deletePolicy, setDeletePolicy] = useState<Policy | null>(null);
+  const [showAddPolicyForm, setShowAddPolicyForm] = useState(false);
 
-  const [isAddInstallmentDialogOpen, setIsAddInstallmentDialogOpen] =
-    useState(false);
   const [isEditInstallmentDialogOpen, setIsEditInstallmentDialogOpen] =
     useState(false);
   const [editingInstallment, setEditingInstallment] =
@@ -244,13 +294,13 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   });
   const [deleteInstallment, setDeleteInstallment] =
     useState<Installment | null>(null);
+  const [showAddInstallmentForm, setShowAddInstallmentForm] = useState(false);
 
   const [installmentSearchQuery, setInstallmentSearchQuery] = useState("");
   const [sortField, setSortField] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const [blogSearchQuery, setBlogSearchQuery] = useState("");
-  const [isAddBlogDialogOpen, setIsAddBlogDialogOpen] = useState(false);
   const [isEditBlogDialogOpen, setIsEditBlogDialogOpen] = useState(false);
   const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
   const [formDataBlog, setFormDataBlog] = useState({
@@ -263,6 +313,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     category: "",
   });
   const [activeTab, setActiveTab] = useState("customers");
+  const [showAddBlogForm, setShowAddBlogForm] = useState(false);
 
   const tabIndex =
     { customers: 0, policies: 1, installments: 2, blogs: 3 }[activeTab] || 0;
@@ -280,6 +331,10 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   );
 
   const handleAddCustomer = () => {
+    if (!formData.name.trim() || !formData.nationalCode.trim() || !formData.phone.trim() || !formData.email.trim()) {
+      alert("لطفا تمام فیلدهای مورد نیاز را پر کنید.");
+      return;
+    }
     const newCustomer = {
       id: Date.now().toString(),
       name: formData.name,
@@ -299,7 +354,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       phone: "",
       email: "",
     });
-    setIsAddDialogOpen(false);
+    setShowCustomerForm(false);
   };
 
   const handleEditCustomer = () => {
@@ -325,7 +380,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       phone: "",
       email: "",
     });
-    setIsEditDialogOpen(false);
+    setShowCustomerForm(false);
     setEditingCustomer(null);
   };
 
@@ -344,12 +399,14 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       phone: customer.phone,
       email: customer.email,
     });
-    setIsEditDialogOpen(true);
+    setShowCustomerForm(true);
   };
 
-  //const filteredPolicies = policies.filter(policy => policy.id.toLowerCase().includes(policySearchQuery.toLowerCase()) || policy.customerName.toLowerCase().includes(policySearchQuery.toLowerCase()));
-
   const handleAddPolicy = () => {
+    if (!formDataPolicy.customerName.trim() || !formDataPolicy.type.trim() || !formDataPolicy.vehicle.trim() || !formDataPolicy.startDate.trim() || !formDataPolicy.endDate.trim() || !formDataPolicy.premium.trim()) {
+      alert("لطفا تمام فیلدهای مورد نیاز را پر کنید.");
+      return;
+    }
     const newPolicy: Policy = {
       id: Date.now().toString(),
       ...formDataPolicy,
@@ -365,7 +422,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       status: "فعال",
       pdfFile: null,
     });
-    setIsAddPolicyDialogOpen(false);
+    setShowAddPolicyForm(false);
   };
 
   const handleEditPolicy = () => {
@@ -407,10 +464,14 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       status: policy.status,
       pdfFile: policy.pdfFile || null,
     });
-    setIsEditPolicyDialogOpen(true);
+    setShowAddPolicyForm(true);
   };
 
   const handleAddInstallment = () => {
+    if (!formDataInstallment.customerName.trim() || !formDataInstallment.policyType.trim() || !formDataInstallment.amount.trim() || !formDataInstallment.dueDate.trim()) {
+      alert("لطفا تمام فیلدهای مورد نیاز را پر کنید.");
+      return;
+    }
     const newInstallment: Installment = {
       id: Date.now().toString(),
       ...formDataInstallment,
@@ -426,7 +487,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       payLink: "",
       status: "معوق",
     });
-    setIsAddInstallmentDialogOpen(false);
+    setShowAddInstallmentForm(false);
   };
 
   const handleEditInstallment = () => {
@@ -444,7 +505,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       payLink: "",
       status: "معوق",
     });
-    setIsEditInstallmentDialogOpen(false);
+    setShowAddInstallmentForm(false);
     setEditingInstallment(null);
   };
 
@@ -464,7 +525,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       payLink: installment.payLink || "",
       status: installment.status,
     });
-    setIsEditInstallmentDialogOpen(true);
+    setShowAddInstallmentForm(true);
   };
 
   const filteredInstallments = installments.filter(
@@ -503,6 +564,10 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   );
 
   const handleAddBlog = () => {
+    if (!formDataBlog.title.trim() || !formDataBlog.excerpt.trim() || !formDataBlog.content.trim() || !formDataBlog.author.trim() || !formDataBlog.category.trim()) {
+      alert("لطفا تمام فیلدهای مورد نیاز را پر کنید.");
+      return;
+    }
     addBlog({
       ...formDataBlog,
       date: formDataBlog.date || new Date().toLocaleDateString("fa-IR"),
@@ -516,7 +581,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       imageUrl: "",
       category: "",
     });
-    setIsAddBlogDialogOpen(false);
+    setShowAddBlogForm(false);
   };
 
   const handleEditBlog = () => {
@@ -531,7 +596,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       imageUrl: "",
       category: "",
     });
-    setIsEditBlogDialogOpen(false);
+    setShowAddBlogForm(false);
     setEditingBlog(null);
   };
 
@@ -554,7 +619,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       imageUrl: blog.imageUrl || "",
       category: blog.category,
     });
-    setIsEditBlogDialogOpen(true);
+    setShowAddBlogForm(true);
   };
 
   const getStatusBadge = (status: string) => {
@@ -593,6 +658,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         return <Badge variant="secondary">{status}</Badge>;
     }
   };
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -737,129 +803,144 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   <div>
                     <CardTitle>مدیریت مشتریان</CardTitle>
                   </div>
-                  <Dialog
-                    open={isAddDialogOpen}
-                    onOpenChange={setIsAddDialogOpen}
+                  <Button
+                    onClick={() => {
+                      setEditingCustomer(null);
+                      setFormData({
+                        name: "",
+                        nationalCode: "",
+                        insuranceCode: "",
+                        phone: "",
+                        email: "",
+                      });
+                      setShowCustomerForm((prev) => !prev);
+                    }}
+                    variant={showCustomerForm ? "outline" : "default"}
                   >
-                    <DialogTrigger asChild>
+                    <Plus className="h-4 w-4 ml-2" />
+                    افزودن مشتری
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <AnimatePresence>
+                  {showCustomerForm && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="mb-6 p-4 bg-white rounded-lg shadow border overflow-hidden"
+                      dir="rtl"
+                    >
+                    <div className="grid gap-4 py-2">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="name" className="text-right">
+                          نام و نام خانوادگی
+                        </Label>
+                        <Input
+                          id="name"
+                          name="name"
+                          autoComplete="name"
+                          value={formData.name}
+                          onChange={(e) =>
+                            setFormData({ ...formData, name: e.target.value })
+                          }
+                          className="col-span-3"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="nationalCode" className="text-right">
+                          کد ملی
+                        </Label>
+                        <Input
+                          id="nationalCode"
+                          name="nationalCode"
+                          value={formData.nationalCode}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              nationalCode: e.target.value,
+                            })
+                          }
+                          className="col-span-3"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label
+                          htmlFor="insuranceCode"
+                          className="text-right"
+                        >
+                          کد بیمه (رمز عبور)
+                        </Label>
+                        <Input
+                          id="insuranceCode"
+                          name="insuranceCode"
+                          type="password"
+                          value={formData.insuranceCode}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              insuranceCode: e.target.value,
+                            })
+                          }
+                          className="col-span-3"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="phone" className="text-right">
+                          شماره تماس
+                        </Label>
+                        <Input
+                          id="phone"
+                          name="phone"
+                          autoComplete="tel"
+                          value={formData.phone}
+                          onChange={(e) =>
+                            setFormData({ ...formData, phone: e.target.value })
+                          }
+                          className="col-span-3"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="email" className="text-right">
+                          ایمیل
+                        </Label>
+                        <Input
+                          id="email"
+                          name="email"
+                          autoComplete="email"
+                          value={formData.email}
+                          onChange={(e) =>
+                            setFormData({ ...formData, email: e.target.value })
+                          }
+                          className="col-span-3"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2 mt-4 justify-end">
+                      <Button onClick={editingCustomer ? handleEditCustomer : handleAddCustomer}>
+                        {editingCustomer ? "ذخیره تغییرات" : "ثبت مشتری"}
+                      </Button>
                       <Button
-                        onClick={() =>
+                        variant="outline"
+                        onClick={() => {
                           setFormData({
                             name: "",
                             nationalCode: "",
                             insuranceCode: "",
                             phone: "",
                             email: "",
-                          })
-                        }
+                          });
+                          setShowCustomerForm(false);
+                        }}
                       >
-                        <Plus className="h-4 w-4 ml-2" />
-                        افزودن مشتری
+                        لغو
                       </Button>
-                    </DialogTrigger>
-                    <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg">
-                      <DialogHeader>
-                        <DialogTitle>افزودن مشتری جدید</DialogTitle>
-                        <DialogDescription>
-                          اطلاعات مشتری را وارد کنید
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="name" className="text-right">
-                            نام و نام خانوادگی
-                          </Label>
-                          <Input
-                            id="name"
-                            name="name"
-                            autoComplete="name"
-                            value={formData.name}
-                            onChange={(e) =>
-                              setFormData({ ...formData, name: e.target.value })
-                            }
-                            className="col-span-3"
-                          />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="nationalCode" className="text-right">
-                            کد ملی
-                          </Label>
-                          <Input
-                            id="nationalCode"
-                            name="nationalCode"
-                            value={formData.nationalCode}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                nationalCode: e.target.value,
-                              })
-                            }
-                            className="col-span-3"
-                          />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="insuranceCode" className="text-right">
-                            کد بیمه (رمز عبور)
-                          </Label>
-                          <Input
-                            id="insuranceCode"
-                            name="insuranceCode"
-                            type="password"
-                            value={formData.insuranceCode}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                insuranceCode: e.target.value,
-                              })
-                            }
-                            className="col-span-3"
-                          />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="phone" className="text-right">
-                            شماره تماس
-                          </Label>
-                          <Input
-                            id="phone"
-                            name="phone"
-                            autoComplete="tel"
-                            value={formData.phone}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                phone: e.target.value,
-                              })
-                            }
-                            className="col-span-3"
-                          />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="email" className="text-right">
-                            ایمیل
-                          </Label>
-                          <Input
-                            id="email"
-                            name="email"
-                            autoComplete="email"
-                            value={formData.email}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                email: e.target.value,
-                              })
-                            }
-                            className="col-span-3"
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button onClick={handleAddCustomer}>افزودن</Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </CardHeader>
-              <CardContent>
+                    </div>
+                  </motion.div>
+                )}
+                </AnimatePresence>
                 <div className="mb-4">
                   <div className="relative">
                     <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
@@ -876,24 +957,18 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>نام و نام خانوادگی</TableHead>
-                      <TableHead>کد ملی</TableHead>
-                      <TableHead>شماره تماس</TableHead>
-                      <TableHead>تاریخ عضویت</TableHead>
-                      <TableHead>بیمه‌نامه‌های فعال</TableHead>
-                      <TableHead>وضعیت</TableHead>
-                      <TableHead>عملیات</TableHead>
+                      <TableHead className="text-left pl-8">عملیات</TableHead>
+                      <TableHead className="text-right">وضعیت</TableHead>
+                      <TableHead className="text-right">بیمه‌نامه‌های فعال</TableHead>
+                      <TableHead className="text-right">تاریخ عضویت</TableHead>
+                      <TableHead className="text-right">شماره تماس</TableHead>
+                      <TableHead className="text-right">کد ملی</TableHead>
+                      <TableHead className="text-right">نام و نام خانوادگی</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredCustomers.map((customer) => (
                       <TableRow key={customer.id}>
-                        <TableCell>{customer.name}</TableCell>
-                        <TableCell>{customer.nationalCode}</TableCell>
-                        <TableCell>{customer.phone}</TableCell>
-                        <TableCell>{customer.joinDate}</TableCell>
-                        <TableCell>{customer.activePolicies}</TableCell>
-                        <TableCell>{getStatusBadge(customer.status)}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
                             <Button
@@ -935,114 +1010,18 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                             </AlertDialog>
                           </div>
                         </TableCell>
+                        <TableCell>{getStatusBadge(customer.status)}</TableCell>
+                        <TableCell>{customer.activePolicies}</TableCell>
+                        <TableCell>{customer.joinDate}</TableCell>
+                        <TableCell>{customer.phone}</TableCell>
+                        <TableCell>{customer.nationalCode}</TableCell>
+                        <TableCell>{customer.name}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </CardContent>
 
-              {/* Edit Customer Dialog */}
-              <Dialog
-                open={isEditDialogOpen}
-                onOpenChange={setIsEditDialogOpen}
-              >
-                <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg">
-                  <DialogHeader>
-                    <DialogTitle>ویرایش مشتری</DialogTitle>
-                    <DialogDescription>
-                      اطلاعات مشتری را ویرایش کنید
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit-name" className="text-right">
-                        نام و نام خانوادگی
-                      </Label>
-                      <Input
-                        id="edit-name"
-                        name="name"
-                        autoComplete="name"
-                        value={formData.name}
-                        onChange={(e) =>
-                          setFormData({ ...formData, name: e.target.value })
-                        }
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit-nationalCode" className="text-right">
-                        کد ملی
-                      </Label>
-                      <Input
-                        id="edit-nationalCode"
-                        name="nationalCode"
-                        value={formData.nationalCode}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            nationalCode: e.target.value,
-                          })
-                        }
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label
-                        htmlFor="edit-insuranceCode"
-                        className="text-right"
-                      >
-                        کد بیمه (رمز عبور)
-                      </Label>
-                      <Input
-                        id="edit-insuranceCode"
-                        name="insuranceCode"
-                        type="password"
-                        value={formData.insuranceCode}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            insuranceCode: e.target.value,
-                          })
-                        }
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit-phone" className="text-right">
-                        شماره تماس
-                      </Label>
-                      <Input
-                        id="edit-phone"
-                        name="phone"
-                        autoComplete="tel"
-                        value={formData.phone}
-                        onChange={(e) =>
-                          setFormData({ ...formData, phone: e.target.value })
-                        }
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit-email" className="text-right">
-                        ایمیل
-                      </Label>
-                      <Input
-                        id="edit-email"
-                        name="email"
-                        autoComplete="email"
-                        value={formData.email}
-                        onChange={(e) =>
-                          setFormData({ ...formData, email: e.target.value })
-                        }
-                        className="col-span-3"
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button onClick={handleEditCustomer}>ذخیره تغییرات</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
             </Card>
           </TabsContent>
 
@@ -1054,214 +1033,186 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   <div>
                     <CardTitle>مدیریت بیمه‌نامه‌ها</CardTitle>
                   </div>
-                  <Dialog
-                    open={isAddPolicyDialogOpen}
-                    onOpenChange={setIsAddPolicyDialogOpen}
+                  <Button
+                    onClick={() => setShowAddPolicyForm((prev) => !prev)}
+                    variant={showAddPolicyForm ? "outline" : "default"}
                   >
-                    <DialogTrigger asChild>
-                      <Button
-                        onClick={() =>
-                          setFormDataPolicy({
-                            customerName: "",
-                            type: "",
-                            vehicle: "",
-                            startDate: "",
-                            endDate: "",
-                            premium: "",
-                            status: "فعال",
-                            pdfFile: null,
-                          })
-                        }
-                      >
-                        <Plus className="h-4 w-4 ml-2" />
-                        صدور بیمه‌نامه
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg">
-                      <DialogHeader>
-                        <DialogTitle>صدور بیمه‌نامه جدید</DialogTitle>
-                        <DialogDescription>
-                          اطلاعات بیمه‌نامه را وارد کنید
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label
-                            htmlFor="policy-customerName"
-                            className="text-right"
-                          >
-                            نام مشتری
-                          </Label>
-                          <Input
-                            id="policy-customerName"
-                            name="customerName"
-                            autoComplete="name"
-                            value={formDataPolicy.customerName}
-                            onChange={(e) =>
-                              setFormDataPolicy({
-                                ...formDataPolicy,
-                                customerName: e.target.value,
-                              })
-                            }
-                            className="col-span-3"
-                          />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="policy-type" className="text-right">
-                            نوع بیمه
-                          </Label>
-                          <Input
-                            id="policy-type"
-                            name="policy-type"
-                            value={formDataPolicy.type}
-                            onChange={(e) =>
-                              setFormDataPolicy({
-                                ...formDataPolicy,
-                                type: e.target.value,
-                              })
-                            }
-                            className="col-span-3"
-                          />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label
-                            htmlFor="policy-vehicle"
-                            className="text-right"
-                          >
-                            موضوع بیمه
-                          </Label>
-                          <Input
-                            id="policy-vehicle"
-                            name="policy-vehicle"
-                            value={formDataPolicy.vehicle}
-                            onChange={(e) =>
-                              setFormDataPolicy({
-                                ...formDataPolicy,
-                                vehicle: e.target.value,
-                              })
-                            }
-                            className="col-span-3"
-                          />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label
-                            htmlFor="policy-startDate"
-                            className="text-right"
-                          >
-                            تاریخ شروع
-                          </Label>
-                          <div className="col-span-3">
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Input
-                                  readOnly
-                                  value={formDataPolicy.startDate}
-                                  placeholder="انتخاب تاریخ شروع"
-                                  className="col-span-3 cursor-pointer bg-white"
-                                />
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0">
-                                <WheelDatePicker
-                                  value={formDataPolicy.startDate}
-                                  onChange={(date: string) =>
-                                    setFormDataPolicy({
-                                      ...formDataPolicy,
-                                      startDate: date,
-                                    })
-                                  }
-                                  minYear={1310}
-                                  maxYear={1410}
-                                  visibleCount={5}
-                                  indicatorBorderColor="green"
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label
-                            htmlFor="policy-endDate"
-                            className="text-right"
-                          >
-                            تاریخ انقضا
-                          </Label>
-                          <div className="col-span-3">
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Input
-                                  readOnly
-                                  value={formDataPolicy.endDate}
-                                  placeholder="انتخاب تاریخ انقضا"
-                                  className="col-span-3 cursor-pointer bg-white"
-                                />
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0">
-                                <WheelDatePicker
-                                  value={formDataPolicy.endDate}
-                                  onChange={(date: string) =>
-                                    setFormDataPolicy({
-                                      ...formDataPolicy,
-                                      endDate: date,
-                                    })
-                                  }
-                                  minYear={1310}
-                                  maxYear={1410}
-                                  visibleCount={5}
-                                  indicatorBorderColor="green"
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label
-                            htmlFor="policy-premium"
-                            className="text-right"
-                          >
-                            حق بیمه (ریال)
-                          </Label>
-                          <PriceInput
-                            value={formDataPolicy.premium}
-                            onChange={(value) =>
-                              setFormDataPolicy({
-                                ...formDataPolicy,
-                                premium: value,
-                              })
-                            }
-                            className="col-span-3"
-                          />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="policy-pdf" className="text-right">
-                            فایل PDF
-                          </Label>
-                          <Input
-                            id="policy-pdf"
-                            name="policy-pdf"
-                            type="file"
-                            accept=".pdf"
-                            onChange={(e) =>
-                              setFormDataPolicy({
-                                ...formDataPolicy,
-                                pdfFile: e.target.files
-                                  ? e.target.files[0]
-                                  : null,
-                              })
-                            }
-                            className="col-span-3"
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button onClick={handleAddPolicy}>
-                          صدور بیمه‌نامه
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                    <Plus className="h-4 w-4 ml-2" />
+                    صدور بیمه‌نامه
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent>
+                {/* Inline Add/Edit Policy Form */}
+                <AnimatePresence>
+                  {showAddPolicyForm && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="mb-6 p-4 bg-white rounded-lg shadow border overflow-hidden"
+                      dir="rtl"
+                    >
+                      <h3 className="text-lg font-semibold mb-4">
+                        {editingPolicy ? "ویرایش بیمه‌نامه" : "صدور بیمه‌نامه"}
+                      </h3>
+                    <div className="grid gap-4 py-2">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label
+                          htmlFor="policy-customerName"
+                          className="text-right"
+                        >
+                          نام مشتری
+                        </Label>
+                        <Input
+                          id="policy-customerName"
+                          name="customerName"
+                          autoComplete="name"
+                          value={formDataPolicy.customerName}
+                          onChange={(e) =>
+                            setFormDataPolicy({
+                              ...formDataPolicy,
+                              customerName: e.target.value,
+                            })
+                          }
+                          className="col-span-3"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="policy-type" className="text-right">
+                          نوع بیمه
+                        </Label>
+                        <Input
+                          id="policy-type"
+                          name="policy-type"
+                          value={formDataPolicy.type}
+                          onChange={(e) =>
+                            setFormDataPolicy({
+                              ...formDataPolicy,
+                              type: e.target.value,
+                            })
+                          }
+                          className="col-span-3"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="policy-vehicle" className="text-right">
+                          موضوع بیمه
+                        </Label>
+                        <Input
+                          id="policy-vehicle"
+                          name="policy-vehicle"
+                          value={formDataPolicy.vehicle}
+                          onChange={(e) =>
+                            setFormDataPolicy({
+                              ...formDataPolicy,
+                              vehicle: e.target.value,
+                            })
+                          }
+                          className="col-span-3"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label
+                          htmlFor="policy-startDate"
+                          className="text-right"
+                        >
+                          تاریخ شروع
+                        </Label>
+                        <div className="col-span-3">
+                          <ClientOnlyDatePicker
+                            value={formDataPolicy.startDate}
+                            onChange={(date: string) => {
+                              setFormDataPolicy({
+                                ...formDataPolicy,
+                                startDate: date,
+                              });
+                            }}
+                            placeholder="انتخاب تاریخ شروع"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="policy-endDate" className="text-right">
+                          تاریخ انقضا
+                        </Label>
+                        <div className="col-span-3">
+                          <ClientOnlyDatePicker
+                            value={formDataPolicy.endDate}
+                            onChange={(date: string) => {
+                              setFormDataPolicy({
+                                ...formDataPolicy,
+                                endDate: date,
+                              });
+                            }}
+                            placeholder="انتخاب تاریخ انقضا"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="policy-premium" className="text-right">
+                          حق بیمه (ریال)
+                        </Label>
+                        <PriceInput
+                          value={formDataPolicy.premium}
+                          onChange={(value) =>
+                            setFormDataPolicy({
+                              ...formDataPolicy,
+                              premium: value,
+                            })
+                          }
+                          className="col-span-3"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="policy-pdf" className="text-right">
+                          فایل PDF
+                        </Label>
+                        <Input
+                          id="policy-pdf"
+                          name="policy-pdf"
+                          type="file"
+                          accept=".pdf"
+                          onChange={(e) =>
+                            setFormDataPolicy({
+                              ...formDataPolicy,
+                              pdfFile: e.target.files
+                                ? e.target.files[0]
+                                : null,
+                            })
+                          }
+                          className="col-span-3"
+                        />
+                      </div>
+                    </div>
+                      <div className="flex gap-2 mt-4 justify-end">
+                        <Button onClick={editingPolicy ? handleEditPolicy : handleAddPolicy}>
+                          {editingPolicy ? "ذخیره تغییرات" : "ثبت بیمه‌نامه"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setEditingPolicy(null);
+                            setFormDataPolicy({
+                              customerName: "",
+                              type: "",
+                              vehicle: "",
+                              startDate: "",
+                              endDate: "",
+                              premium: "",
+                              status: "فعال",
+                              pdfFile: null,
+                            });
+                            setShowAddPolicyForm(false);
+                          }}
+                        >
+                          لغو
+                        </Button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 <div className="mb-4">
                   <div className="relative">
                     <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
@@ -1278,28 +1229,20 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>شماره بیمه‌نامه</TableHead>
-                      <TableHead>نام مشتری</TableHead>
-                      <TableHead>نوع بیمه</TableHead>
-                      <TableHead>موضوع بیمه</TableHead>
-                      <TableHead>تاریخ شروع</TableHead>
-                      <TableHead>تاریخ انقضا</TableHead>
-                      <TableHead>حق بیمه</TableHead>
-                      <TableHead>وضعیت</TableHead>
-                      <TableHead>عملیات</TableHead>
+                      <TableHead className="text-left pl-8">عملیات</TableHead>
+                      <TableHead className="text-right">وضعیت</TableHead>
+                      <TableHead className="text-right">حق بیمه</TableHead>
+                      <TableHead className="text-right">تاریخ انقضا</TableHead>
+                      <TableHead className="text-right">تاریخ شروع</TableHead>
+                      <TableHead className="text-right">موضوع بیمه</TableHead>
+                      <TableHead className="text-right">نوع بیمه</TableHead>
+                      <TableHead className="text-right">نام مشتری</TableHead>
+                      <TableHead className="text-right">شماره بیمه‌نامه</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {policies.map((policy) => (
                       <TableRow key={policy.id}>
-                        <TableCell>{policy.id}</TableCell>
-                        <TableCell>{policy.customerName}</TableCell>
-                        <TableCell>{policy.type}</TableCell>
-                        <TableCell>{policy.vehicle}</TableCell>
-                        <TableCell>{policy.startDate}</TableCell>
-                        <TableCell>{policy.endDate}</TableCell>
-                        <TableCell>{formatPrice(policy.premium)}</TableCell>
-                        <TableCell>{getStatusBadge(policy.status)}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
                             <Button
@@ -1343,195 +1286,21 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                             </AlertDialog>
                           </div>
                         </TableCell>
+                        <TableCell>{getStatusBadge(policy.status)}</TableCell>
+                        <TableCell>{formatPrice(policy.premium)}</TableCell>
+                        <TableCell>{policy.endDate}</TableCell>
+                        <TableCell>{policy.startDate}</TableCell>
+                        <TableCell>{policy.vehicle}</TableCell>
+                        <TableCell>{policy.type}</TableCell>
+                        <TableCell>{policy.customerName}</TableCell>
+                        <TableCell>{policy.id}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </CardContent>
 
-              {/* Edit Policy Dialog */}
-              <Dialog
-                open={isEditPolicyDialogOpen}
-                onOpenChange={setIsEditPolicyDialogOpen}
-              >
-                <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg">
-                  <DialogHeader>
-                    <DialogTitle>ویرایش بیمه‌نامه</DialogTitle>
-                    <DialogDescription>
-                      اطلاعات بیمه‌نامه را ویرایش کنید
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label
-                        htmlFor="edit-policy-customerName"
-                        className="text-right"
-                      >
-                        نام مشتری
-                      </Label>
-                      <Input
-                        id="edit-policy-customerName"
-                        name="customerName"
-                        autoComplete="name"
-                        value={formDataPolicy.customerName}
-                        onChange={(e) =>
-                          setFormDataPolicy({
-                            ...formDataPolicy,
-                            customerName: e.target.value,
-                          })
-                        }
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit-policy-type" className="text-right">
-                        نوع بیمه
-                      </Label>
-                      <Input
-                        id="edit-policy-type"
-                        name="policy-type"
-                        value={formDataPolicy.type}
-                        onChange={(e) =>
-                          setFormDataPolicy({
-                            ...formDataPolicy,
-                            type: e.target.value,
-                          })
-                        }
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label
-                        htmlFor="edit-policy-vehicle"
-                        className="text-right"
-                      >
-                        موضوع بیمه
-                      </Label>
-                      <Input
-                        id="edit-policy-vehicle"
-                        name="policy-vehicle"
-                        value={formDataPolicy.vehicle}
-                        onChange={(e) =>
-                          setFormDataPolicy({
-                            ...formDataPolicy,
-                            vehicle: e.target.value,
-                          })
-                        }
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label
-                        htmlFor="edit-policy-startDate"
-                        className="text-right"
-                      >
-                        تاریخ شروع
-                      </Label>
-                      <div className="col-span-3">
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Input
-                              readOnly
-                              value={formDataPolicy.startDate}
-                              placeholder="انتخاب تاریخ شروع"
-                              className="col-span-3 cursor-pointer bg-white"
-                            />
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0">
-                            <WheelDatePicker
-                              value={formDataPolicy.startDate}
-                              onChange={(date: string) =>
-                                setFormDataPolicy({
-                                  ...formDataPolicy,
-                                  startDate: date,
-                                })
-                              }
-                              minYear={1310}
-                              maxYear={1410}
-                              visibleCount={5}
-                              indicatorBorderColor="green"
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label
-                        htmlFor="edit-policy-endDate"
-                        className="text-right"
-                      >
-                        تاریخ انقضا
-                      </Label>
-                      <div className="col-span-3">
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Input
-                              readOnly
-                              value={formDataPolicy.endDate}
-                              placeholder="انتخاب تاریخ انقضا"
-                              className="col-span-3 cursor-pointer bg-white"
-                            />
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0">
-                            <WheelDatePicker
-                              value={formDataPolicy.endDate}
-                              onChange={(date: string) =>
-                                setFormDataPolicy({
-                                  ...formDataPolicy,
-                                  endDate: date,
-                                })
-                              }
-                              minYear={1310}
-                              maxYear={1410}
-                              visibleCount={5}
-                              indicatorBorderColor="green"
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label
-                        htmlFor="edit-policy-premium"
-                        className="text-right"
-                      >
-                        حق بیمه (ریال)
-                      </Label>
-                      <PriceInput
-                        value={formDataPolicy.premium}
-                        onChange={(value) =>
-                          setFormDataPolicy({
-                            ...formDataPolicy,
-                            premium: value,
-                          })
-                        }
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit-policy-pdf" className="text-right">
-                        فایل PDF
-                      </Label>
-                      <Input
-                        id="edit-policy-pdf"
-                        name="policy-pdf"
-                        type="file"
-                        accept=".pdf"
-                        onChange={(e) =>
-                          setFormDataPolicy({
-                            ...formDataPolicy,
-                            pdfFile: e.target.files ? e.target.files[0] : null,
-                          })
-                        }
-                        className="col-span-3"
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button onClick={handleEditPolicy}>ذخیره تغییرات</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+              {/* Edit Policy Dialog removed */}
             </Card>
           </TabsContent>
 
@@ -1540,191 +1309,185 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>مدیریت اقساط</CardTitle>
-                  </div>
-                  <Dialog
-                    open={isAddInstallmentDialogOpen}
-                    onOpenChange={setIsAddInstallmentDialogOpen}
+                  <CardTitle>مدیریت اقساط</CardTitle>
+                  <Button
+                    onClick={() => setShowAddInstallmentForm((prev) => !prev)}
+                    variant={showAddInstallmentForm ? "outline" : "default"}
                   >
-                    <DialogTrigger asChild>
-                      <Button
-                        onClick={() =>
-                          setFormDataInstallment({
-                            customerName: "",
-                            policyType: "",
-                            amount: "",
-                            dueDate: "",
-                            payLink: "",
-                            status: "معوق",
-                          })
-                        }
-                      >
-                        <Plus className="h-4 w-4 ml-2" />
-                        افزودن قسط
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg">
-                      <DialogHeader>
-                        <DialogTitle>افزودن قسط جدید</DialogTitle>
-                        <DialogDescription>
-                          اطلاعات قسط را وارد کنید
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label
-                            htmlFor="installment-customerName"
-                            className="text-right"
-                          >
-                            نام مشتری
-                          </Label>
-                          <Input
-                            id="installment-customerName"
-                            name="customerName"
-                            autoComplete="name"
-                            value={formDataInstallment.customerName}
-                            onChange={(e) =>
-                              setFormDataInstallment({
-                                ...formDataInstallment,
-                                customerName: e.target.value,
-                              })
-                            }
-                            className="col-span-3"
-                          />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label
-                            htmlFor="installment-policyType"
-                            className="text-right"
-                          >
-                            نوع بیمه
-                          </Label>
-                          <Input
-                            id="installment-policyType"
-                            name="policyType"
-                            value={formDataInstallment.policyType}
-                            onChange={(e) =>
-                              setFormDataInstallment({
-                                ...formDataInstallment,
-                                policyType: e.target.value,
-                              })
-                            }
-                            className="col-span-3"
-                          />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label
-                            htmlFor="installment-amount"
-                            className="text-right"
-                          >
-                            مبلغ قسط (ریال)
-                          </Label>
-                          <PriceInput
-                            value={formDataInstallment.amount}
-                            onChange={(value) =>
-                              setFormDataInstallment({
-                                ...formDataInstallment,
-                                amount: value,
-                              })
-                            }
-                            className="col-span-3"
-                          />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label
-                            htmlFor="installment-dueDate"
-                            className="text-right"
-                          >
-                            سررسید
-                          </Label>
-                          <div className="col-span-3">
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Input
-                                  readOnly
-                                  value={formDataInstallment.dueDate}
-                                  placeholder="انتخاب سررسید"
-                                  className="col-span-3 cursor-pointer bg-white"
-                                />
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0">
-                                <WheelDatePicker
-                                  value={formDataInstallment.dueDate}
-                                  onChange={(date: string) =>
-                                    setFormDataInstallment({
-                                      ...formDataInstallment,
-                                      dueDate: date,
-                                    })
-                                  }
-                                  minYear={1310}
-                                  maxYear={1410}
-                                  visibleCount={5}
-                                  indicatorBorderColor="green"
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label
-                            htmlFor="installment-status"
-                            className="text-right"
-                          >
-                            وضعیت
-                          </Label>
-                          <Select
-                            name="status"
-                            value={formDataInstallment.status}
-                            onValueChange={(value: string) =>
-                              setFormDataInstallment({
-                                ...formDataInstallment,
-                                status: value,
-                              })
-                            }
-                          >
-                            <SelectTrigger className="col-span-3">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="معوق">معوق</SelectItem>
-                              <SelectItem value="پرداخت شده">
-                                پرداخت شده
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label
-                            htmlFor="installment-payLink"
-                            className="text-right"
-                          >
-                            لینک پرداخت
-                          </Label>
-                          <Input
-                            id="installment-payLink"
-                            name="payLink"
-                            value={formDataInstallment.payLink}
-                            onChange={(e) =>
-                              setFormDataInstallment({
-                                ...formDataInstallment,
-                                payLink: e.target.value,
-                              })
-                            }
-                            className="col-span-3"
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button onClick={handleAddInstallment}>
-                          افزودن قسط
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                    <Plus className="h-4 w-4 ml-2" />
+                    افزودن قسط
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent>
+                {/* Inline Add/Edit Installment Form */}
+                <AnimatePresence>
+                  {showAddInstallmentForm && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="mb-6 p-4 bg-white rounded-lg shadow border overflow-hidden"
+                      dir="rtl"
+                    >
+                      <h3 className="text-lg font-semibold mb-4">
+                        {editingInstallment ? "ویرایش قسط" : "افزودن قسط"}
+                      </h3>
+                    <div className="grid gap-4 py-2">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label
+                          htmlFor="installment-customerName"
+                          className="text-right"
+                        >
+                          نام مشتری
+                        </Label>
+                        <Input
+                          id="installment-customerName"
+                          name="customerName"
+                          autoComplete="name"
+                          value={formDataInstallment.customerName}
+                          onChange={(e) =>
+                            setFormDataInstallment({
+                              ...formDataInstallment,
+                              customerName: e.target.value,
+                            })
+                          }
+                          className="col-span-3"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label
+                          htmlFor="installment-policyType"
+                          className="text-right"
+                        >
+                          نوع بیمه
+                        </Label>
+                        <Input
+                          id="installment-policyType"
+                          name="policyType"
+                          value={formDataInstallment.policyType}
+                          onChange={(e) =>
+                            setFormDataInstallment({
+                              ...formDataInstallment,
+                              policyType: e.target.value,
+                            })
+                          }
+                          className="col-span-3"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label
+                          htmlFor="installment-amount"
+                          className="text-right"
+                        >
+                          مبلغ قسط (ریال)
+                        </Label>
+                        <PriceInput
+                          value={formDataInstallment.amount}
+                          onChange={(value) =>
+                            setFormDataInstallment({
+                              ...formDataInstallment,
+                              amount: value,
+                            })
+                          }
+                          className="col-span-3"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label
+                          htmlFor="installment-dueDate"
+                          className="text-right"
+                        >
+                          سررسید
+                        </Label>
+                        <div className="col-span-3">
+                          <ClientOnlyDatePicker
+                            value={formDataInstallment.dueDate}
+                            onChange={(date: string) => {
+                              setFormDataInstallment({
+                                ...formDataInstallment,
+                                dueDate: date,
+                              });
+                            }}
+                            placeholder="انتخاب سررسید"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label
+                          htmlFor="installment-status"
+                          className="text-right"
+                        >
+                          وضعیت
+                        </Label>
+                        <Select
+                          name="status"
+                          value={formDataInstallment.status}
+                          onValueChange={(value: string) =>
+                            setFormDataInstallment({
+                              ...formDataInstallment,
+                              status: value,
+                            })
+                          }
+                        >
+                          <SelectTrigger className="col-span-3">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="معوق">معوق</SelectItem>
+                            <SelectItem value="پرداخت شده">
+                              پرداخت شده
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label
+                          htmlFor="installment-payLink"
+                          className="text-right"
+                        >
+                          لینک پرداخت
+                        </Label>
+                        <Input
+                          id="installment-payLink"
+                          name="payLink"
+                          value={formDataInstallment.payLink}
+                          onChange={(e) =>
+                            setFormDataInstallment({
+                              ...formDataInstallment,
+                              payLink: e.target.value,
+                            })
+                          }
+                          className="col-span-3"
+                        />
+                      </div>
+                    </div>
+                      <div className="flex gap-2 mt-4 justify-end">
+                        <Button onClick={editingInstallment ? handleEditInstallment : handleAddInstallment}>
+                          {editingInstallment ? "ذخیره تغییرات" : "ثبت قسط"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setEditingInstallment(null);
+                            setFormDataInstallment({
+                              customerName: "",
+                              policyType: "",
+                              amount: "",
+                              dueDate: "",
+                              payLink: "",
+                              status: "معوق",
+                            });
+                            setShowAddInstallmentForm(false);
+                          }}
+                        >
+                          لغو
+                        </Button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 <div className="mb-4">
                   <div className="relative">
                     <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
@@ -1743,59 +1506,43 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="text-left pl-8">عملیات</TableHead>
                       <TableHead
-                        onClick={() => handleSort("customerName")}
-                        className="cursor-pointer hover:bg-gray-50"
+                        onClick={() => handleSort("status")}
+                        className="cursor-pointer hover:bg-gray-50 text-right"
                       >
-                        نام مشتری
+                        وضعیت
                       </TableHead>
+                      <TableHead className="text-right">تعداد روز تاخیر</TableHead>
                       <TableHead
-                        onClick={() => handleSort("policyType")}
-                        className="cursor-pointer hover:bg-gray-50"
+                        onClick={() => handleSort("dueDate")}
+                        className="cursor-pointer hover:bg-gray-50 text-right"
                       >
-                        نوع بیمه
+                        سررسید
                       </TableHead>
                       <TableHead
                         onClick={() => handleSort("amount")}
-                        className="cursor-pointer hover:bg-gray-50"
+                        className="cursor-pointer hover:bg-gray-50 text-right"
                       >
                         مبلغ قسط
                       </TableHead>
                       <TableHead
-                        onClick={() => handleSort("dueDate")}
-                        className="cursor-pointer hover:bg-gray-50"
+                        onClick={() => handleSort("policyType")}
+                        className="cursor-pointer hover:bg-gray-50 text-right"
                       >
-                        سررسید
+                        نوع بیمه
                       </TableHead>
-                      <TableHead>تعداد روز تاخیر</TableHead>
                       <TableHead
-                        onClick={() => handleSort("status")}
-                        className="cursor-pointer hover:bg-gray-50"
+                        onClick={() => handleSort("customerName")}
+                        className="cursor-pointer hover:bg-gray-50 text-right"
                       >
-                        وضعیت
+                        نام مشتری
                       </TableHead>
-                      <TableHead>عملیات</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {sortedInstallments.map((installment) => (
                       <TableRow key={installment.id}>
-                        <TableCell>{installment.customerName}</TableCell>
-                        <TableCell>{installment.policyType}</TableCell>
-                        <TableCell>{formatPrice(installment.amount)}</TableCell>
-                        <TableCell>{installment.dueDate}</TableCell>
-                        <TableCell>
-                          {installment.daysOverdue > 0 ? (
-                            <span className="text-red-600">
-                              {installment.daysOverdue} روز
-                            </span>
-                          ) : (
-                            "-"
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {getStatusBadge(installment.status)}
-                        </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
                             <Button
@@ -1841,173 +1588,29 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                             </AlertDialog>
                           </div>
                         </TableCell>
+                        <TableCell>
+                          {getStatusBadge(installment.status)}
+                        </TableCell>
+                        <TableCell>
+                          {installment.daysOverdue > 0 ? (
+                            <span className="text-red-600">
+                              {installment.daysOverdue} روز
+                            </span>
+                          ) : (
+                            "-"
+                          )}
+                        </TableCell>
+                        <TableCell>{installment.dueDate}</TableCell>
+                        <TableCell>{formatPrice(installment.amount)}</TableCell>
+                        <TableCell>{installment.policyType}</TableCell>
+                        <TableCell>{installment.customerName}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </CardContent>
 
-              {/* Edit Installment Dialog */}
-              <Dialog
-                open={isEditInstallmentDialogOpen}
-                onOpenChange={setIsEditInstallmentDialogOpen}
-              >
-                <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg">
-                  <DialogHeader>
-                    <DialogTitle>ویرایش قسط</DialogTitle>
-                    <DialogDescription>
-                      اطلاعات قسط را ویرایش کنید
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label
-                        htmlFor="edit-installment-customerName"
-                        className="text-right"
-                      >
-                        نام مشتری
-                      </Label>
-                      <Input
-                        id="edit-installment-customerName"
-                        name="customerName"
-                        autoComplete="name"
-                        value={formDataInstallment.customerName}
-                        onChange={(e) =>
-                          setFormDataInstallment({
-                            ...formDataInstallment,
-                            customerName: e.target.value,
-                          })
-                        }
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label
-                        htmlFor="edit-installment-policyType"
-                        className="text-right"
-                      >
-                        نوع بیمه
-                      </Label>
-                      <Input
-                        id="edit-installment-policyType"
-                        name="policyType"
-                        value={formDataInstallment.policyType}
-                        onChange={(e) =>
-                          setFormDataInstallment({
-                            ...formDataInstallment,
-                            policyType: e.target.value,
-                          })
-                        }
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label
-                        htmlFor="edit-installment-amount"
-                        className="text-right"
-                      >
-                        مبلغ قسط (ریال)
-                      </Label>
-                      <PriceInput
-                        value={formDataInstallment.amount}
-                        onChange={(value) =>
-                          setFormDataInstallment({
-                            ...formDataInstallment,
-                            amount: value,
-                          })
-                        }
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label
-                        htmlFor="edit-installment-dueDate"
-                        className="text-right"
-                      >
-                        سررسید
-                      </Label>
-                      <div className="col-span-3">
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Input
-                              readOnly
-                              value={formDataInstallment.dueDate}
-                              placeholder="انتخاب سررسید"
-                              className="col-span-3 cursor-pointer bg-white"
-                            />
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0">
-                            <WheelDatePicker
-                              value={formDataInstallment.dueDate}
-                              onChange={(date: string) =>
-                                setFormDataInstallment({
-                                  ...formDataInstallment,
-                                  dueDate: date,
-                                })
-                              }
-                              minYear={1310}
-                              maxYear={1410}
-                              visibleCount={5}
-                              indicatorBorderColor="green"
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label
-                        htmlFor="edit-installment-status"
-                        className="text-right"
-                      >
-                        وضعیت
-                      </Label>
-                      <Select
-                        name="status"
-                        value={formDataInstallment.status}
-                        onValueChange={(value: string) =>
-                          setFormDataInstallment({
-                            ...formDataInstallment,
-                            status: value,
-                          })
-                        }
-                      >
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="معوق">معوق</SelectItem>
-                          <SelectItem value="پرداخت شده">پرداخت شده</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label
-                        htmlFor="edit-installment-payLink"
-                        className="text-right"
-                      >
-                        لینک پرداخت
-                      </Label>
-                      <Input
-                        id="edit-installment-payLink"
-                        name="payLink"
-                        value={formDataInstallment.payLink}
-                        onChange={(e) =>
-                          setFormDataInstallment({
-                            ...formDataInstallment,
-                            payLink: e.target.value,
-                          })
-                        }
-                        className="col-span-3"
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button onClick={handleEditInstallment}>
-                      ذخیره تغییرات
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+              {/* Edit Installment Dialog removed */}
             </Card>
           </TabsContent>
 
@@ -2019,179 +1622,177 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   <div>
                     <CardTitle>مدیریت وبلاگ</CardTitle>
                   </div>
-                  <Dialog
-                    open={isAddBlogDialogOpen}
-                    onOpenChange={setIsAddBlogDialogOpen}
+                  <Button
+                    onClick={() => setShowAddBlogForm((prev) => !prev)}
+                    variant={showAddBlogForm ? "outline" : "default"}
                   >
-                    <DialogTrigger asChild>
-                      <Button
-                        onClick={() =>
-                          setFormDataBlog({
-                            title: "",
-                            excerpt: "",
-                            content: "",
-                            author: "",
-                            date: "",
-                            imageUrl: "",
-                            category: "",
-                          })
-                        }
-                      >
-                        <Plus className="h-4 w-4 ml-2" />
-                        افزودن مقاله
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg max-w-2xl">
-                      <DialogHeader>
-                        <DialogTitle>افزودن مقاله جدید</DialogTitle>
-                        <DialogDescription>
-                          اطلاعات مقاله را وارد کنید
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4 max-h-96 overflow-y-auto">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="blog-title" className="text-right">
-                            عنوان
-                          </Label>
-                          <Input
-                            id="blog-title"
-                            name="blog-title"
-                            value={formDataBlog.title}
-                            onChange={(e) =>
-                              setFormDataBlog({
-                                ...formDataBlog,
-                                title: e.target.value,
-                              })
-                            }
-                            className="col-span-3"
-                          />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="blog-excerpt" className="text-right">
-                            خلاصه
-                          </Label>
-                          <Input
-                            id="blog-excerpt"
-                            name="blog-excerpt"
-                            value={formDataBlog.excerpt}
-                            onChange={(e) =>
-                              setFormDataBlog({
-                                ...formDataBlog,
-                                excerpt: e.target.value,
-                              })
-                            }
-                            className="col-span-3"
-                          />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="blog-content" className="text-right">
-                            محتوا
-                          </Label>
-                          <textarea
-                            id="blog-content"
-                            name="blog-content"
-                            value={formDataBlog.content}
-                            onChange={(e) =>
-                              setFormDataBlog({
-                                ...formDataBlog,
-                                content: e.target.value,
-                              })
-                            }
-                            className="col-span-3 border rounded-md p-2 min-h-24"
-                          />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="blog-author" className="text-right">
-                            نویسنده
-                          </Label>
-                          <Input
-                            id="blog-author"
-                            name="blog-author"
-                            value={formDataBlog.author}
-                            onChange={(e) =>
-                              setFormDataBlog({
-                                ...formDataBlog,
-                                author: e.target.value,
-                              })
-                            }
-                            className="col-span-3"
-                          />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="blog-date" className="text-right">
-                            تاریخ
-                          </Label>
-                          <div className="col-span-3">
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Input
-                                  readOnly
-                                  value={formDataBlog.date}
-                                  placeholder="انتخاب تاریخ"
-                                  className="col-span-3 cursor-pointer bg-white"
-                                />
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0">
-                                <WheelDatePicker
-                                  value={formDataBlog.date}
-                                  onChange={(date: string) =>
-                                    setFormDataBlog({ ...formDataBlog, date })
-                                  }
-                                  minYear={1310}
-                                  maxYear={1410}
-                                  visibleCount={5}
-                                  indicatorBorderColor="green"
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="blog-image" className="text-right">
-                            تصویر
-                          </Label>
-                          <Input
-                            id="blog-image"
-                            name="blog-image"
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) =>
-                              setFormDataBlog({
-                                ...formDataBlog,
-                                imageUrl: e.target.files
-                                  ? e.target.files[0].name
-                                  : "",
-                              })
-                            }
-                            className="col-span-3"
-                          />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="blog-category" className="text-right">
-                            دسته‌بندی
-                          </Label>
-                          <Input
-                            id="blog-category"
-                            name="blog-category"
-                            value={formDataBlog.category}
-                            onChange={(e) =>
-                              setFormDataBlog({
-                                ...formDataBlog,
-                                category: e.target.value,
-                              })
-                            }
-                            className="col-span-3"
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button onClick={handleAddBlog}>افزودن</Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                    <Plus className="h-4 w-4 ml-2" />
+                    افزودن مقاله
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent>
+                {/* Inline Add/Edit Blog Form */}
+                <AnimatePresence>
+                  {showAddBlogForm && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="mb-6 p-4 bg-white rounded-lg shadow border overflow-hidden"
+                      dir="rtl"
+                    >
+                      <h3 className="text-lg font-semibold mb-4">
+                        {editingBlog ? "ویرایش مقاله" : "افزودن مقاله"}
+                      </h3>
+                    <div className="grid gap-4 py-2">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="blog-title" className="text-right">
+                          عنوان
+                        </Label>
+                        <Input
+                          id="blog-title"
+                          name="blog-title"
+                          value={formDataBlog.title}
+                          onChange={(e) =>
+                            setFormDataBlog({
+                              ...formDataBlog,
+                              title: e.target.value,
+                            })
+                          }
+                          className="col-span-3"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="blog-excerpt" className="text-right">
+                          خلاصه
+                        </Label>
+                        <Input
+                          id="blog-excerpt"
+                          name="blog-excerpt"
+                          value={formDataBlog.excerpt}
+                          onChange={(e) =>
+                            setFormDataBlog({
+                              ...formDataBlog,
+                              excerpt: e.target.value,
+                            })
+                          }
+                          className="col-span-3"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="blog-content" className="text-right">
+                          محتوا
+                        </Label>
+                        <textarea
+                          id="blog-content"
+                          name="blog-content"
+                          value={formDataBlog.content}
+                          onChange={(e) =>
+                            setFormDataBlog({
+                              ...formDataBlog,
+                              content: e.target.value,
+                            })
+                          }
+                          className="col-span-3 border rounded-md p-2 min-h-24"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="blog-author" className="text-right">
+                          نویسنده
+                        </Label>
+                        <Input
+                          id="blog-author"
+                          name="blog-author"
+                          value={formDataBlog.author}
+                          onChange={(e) =>
+                            setFormDataBlog({
+                              ...formDataBlog,
+                              author: e.target.value,
+                            })
+                          }
+                          className="col-span-3"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="blog-date" className="text-right">
+                          تاریخ
+                        </Label>
+                        <div className="col-span-3">
+                          <ClientOnlyDatePicker
+                            value={formDataBlog.date}
+                            onChange={(date: string) => {
+                              setFormDataBlog({ ...formDataBlog, date });
+                            }}
+                            placeholder="انتخاب تاریخ"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="blog-image" className="text-right">
+                          تصویر
+                        </Label>
+                        <Input
+                          id="blog-image"
+                          name="blog-image"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) =>
+                            setFormDataBlog({
+                              ...formDataBlog,
+                              imageUrl: e.target.files
+                                ? e.target.files[0].name
+                                : "",
+                            })
+                          }
+                          className="col-span-3"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="blog-category" className="text-right">
+                          دسته‌بندی
+                        </Label>
+                        <Input
+                          id="blog-category"
+                          name="blog-category"
+                          value={formDataBlog.category}
+                          onChange={(e) =>
+                            setFormDataBlog({
+                              ...formDataBlog,
+                              category: e.target.value,
+                            })
+                          }
+                          className="col-span-3"
+                        />
+                      </div>
+                    </div>
+                      <div className="flex gap-2 mt-4 justify-end">
+                        <Button onClick={editingBlog ? handleEditBlog : handleAddBlog}>
+                          {editingBlog ? "ذخیره تغییرات" : "ثبت مقاله"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setEditingBlog(null);
+                            setFormDataBlog({
+                              title: "",
+                              excerpt: "",
+                              content: "",
+                              author: "",
+                              date: "",
+                              imageUrl: "",
+                              category: "",
+                            });
+                            setShowAddBlogForm(false);
+                          }}
+                        >
+                          لغو
+                        </Button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 <div className="mb-4">
                   <div className="relative">
                     <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
@@ -2208,22 +1809,16 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>عنوان</TableHead>
-                      <TableHead>نویسنده</TableHead>
-                      <TableHead>دسته‌بندی</TableHead>
-                      <TableHead>تاریخ</TableHead>
-                      <TableHead>عملیات</TableHead>
+                      <TableHead className="pl-8">عملیات</TableHead>
+                      <TableHead className="text-right">تاریخ</TableHead>
+                      <TableHead className="text-right">دسته‌بندی</TableHead>
+                      <TableHead className="text-right">نویسنده</TableHead>
+                      <TableHead className="text-right">عنوان</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredBlogs.map((blog) => (
                       <TableRow key={blog.id}>
-                        <TableCell className="max-w-xs truncate">
-                          {blog.title}
-                        </TableCell>
-                        <TableCell>{blog.author}</TableCell>
-                        <TableCell>{blog.category}</TableCell>
-                        <TableCell>{blog.date}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
                             <Button
@@ -2265,168 +1860,19 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                             </AlertDialog>
                           </div>
                         </TableCell>
+                        <TableCell>{blog.date}</TableCell>
+                        <TableCell>{blog.category}</TableCell>
+                        <TableCell>{blog.author}</TableCell>
+                        <TableCell className="max-w-xs truncate">
+                          {blog.title}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </CardContent>
 
-              {/* Edit Blog Dialog */}
-              <Dialog
-                open={isEditBlogDialogOpen}
-                onOpenChange={setIsEditBlogDialogOpen}
-              >
-                <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>ویرایش مقاله</DialogTitle>
-                    <DialogDescription>
-                      اطلاعات مقاله را ویرایش کنید
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4 max-h-96 overflow-y-auto">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit-blog-title" className="text-right">
-                        عنوان
-                      </Label>
-                      <Input
-                        id="edit-blog-title"
-                        name="blog-title"
-                        value={formDataBlog.title}
-                        onChange={(e) =>
-                          setFormDataBlog({
-                            ...formDataBlog,
-                            title: e.target.value,
-                          })
-                        }
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit-blog-excerpt" className="text-right">
-                        خلاصه
-                      </Label>
-                      <Input
-                        id="edit-blog-excerpt"
-                        name="blog-excerpt"
-                        value={formDataBlog.excerpt}
-                        onChange={(e) =>
-                          setFormDataBlog({
-                            ...formDataBlog,
-                            excerpt: e.target.value,
-                          })
-                        }
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit-blog-content" className="text-right">
-                        محتوا
-                      </Label>
-                      <textarea
-                        id="edit-blog-content"
-                        name="blog-content"
-                        value={formDataBlog.content}
-                        onChange={(e) =>
-                          setFormDataBlog({
-                            ...formDataBlog,
-                            content: e.target.value,
-                          })
-                        }
-                        className="col-span-3 border rounded-md p-2 min-h-24"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit-blog-author" className="text-right">
-                        نویسنده
-                      </Label>
-                      <Input
-                        id="edit-blog-author"
-                        name="blog-author"
-                        value={formDataBlog.author}
-                        onChange={(e) =>
-                          setFormDataBlog({
-                            ...formDataBlog,
-                            author: e.target.value,
-                          })
-                        }
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit-blog-date" className="text-right">
-                        تاریخ
-                      </Label>
-                      <div className="col-span-3">
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Input
-                              readOnly
-                              value={formDataBlog.date}
-                              placeholder="انتخاب تاریخ"
-                              className="col-span-3 cursor-pointer bg-white"
-                            />
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0">
-                            <WheelDatePicker
-                              value={formDataBlog.date}
-                              onChange={(date: string) =>
-                                setFormDataBlog({ ...formDataBlog, date })
-                              }
-                              minYear={1310}
-                              maxYear={1410}
-                              visibleCount={5}
-                              indicatorBorderColor="green"
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit-blog-image" className="text-right">
-                        تصویر
-                      </Label>
-                      <Input
-                        id="edit-blog-image"
-                        name="blog-image"
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) =>
-                          setFormDataBlog({
-                            ...formDataBlog,
-                            imageUrl: e.target.files
-                              ? e.target.files[0].name
-                              : "",
-                          })
-                        }
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label
-                        htmlFor="edit-blog-category"
-                        className="text-right"
-                      >
-                        دسته‌بندی
-                      </Label>
-                      <Input
-                        id="edit-blog-category"
-                        name="blog-category"
-                        value={formDataBlog.category}
-                        onChange={(e) =>
-                          setFormDataBlog({
-                            ...formDataBlog,
-                            category: e.target.value,
-                          })
-                        }
-                        className="col-span-3"
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button onClick={handleEditBlog}>ذخیره تغییرات</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+              {/* Edit Blog Dialog removed */}
             </Card>
           </TabsContent>
         </Tabs>
