@@ -89,19 +89,10 @@ export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
               </Button>
             </form>
 
-            <div className="mt-6 text-center space-y-3">
-              <p className="text-sm text-gray-600">
-                رمز عبور خود را فراموش کرده‌اید؟
-              </p>
-              <Button variant="link" className="text-green-600 hover:text-green-700 p-0">
-                بازیابی رمز عبور
-              </Button>
-            </div>
-
             <div className="mt-6 text-center">
               <Button
                 variant="ghost"
-                onClick={() => onNavigate('home')}
+                onClick={() => onNavigate('/')}
                 className="text-gray-600 hover:text-gray-700"
               >
                 <ArrowRight className="h-4 w-4 ml-2" />
@@ -110,19 +101,6 @@ export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
             </div>
           </CardContent>
         </Card>
-
-        {/* Demo info */}
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <p className="text-sm text-blue-800">
-            <strong>نسخه نمایشی:</strong>
-          </p>
-          <p className="text-xs text-blue-700 mt-1">
-            مشتری: هر کد ملی + هر کد بیمه‌گذار
-          </p>
-          <p className="text-xs text-blue-700">
-            ادمین: ۰۰۰۰۰۰۰۰۰۰ + admin
-          </p>
-        </div>
       </div>
     </div>
   );

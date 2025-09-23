@@ -43,7 +43,7 @@ export function Footer() {
           <div>
             <h4 className="text-lg mb-6">خدمات</h4>
             <ul className="space-y-3">
-              <li><a href="#" className="text-gray-400 hover:text-green-400 transition-colors">بیمه شخص ثالث</a></li>
+              <li><button><a href="#" className="text-gray-400 hover:text-green-400 transition-colors">بیمه شخص ثالث</a></button></li>
               <li><a href="#" className="text-gray-400 hover:text-green-400 transition-colors">بیمه بدنه خودرو</a></li>
               <li><a href="#" className="text-gray-400 hover:text-green-400 transition-colors">بیمه آتش‌سوزی</a></li>
               <li><a href="#" className="text-gray-400 hover:text-green-400 transition-colors">بیمه مسئولیت مدنی</a></li>
@@ -60,17 +60,9 @@ export function Footer() {
                 <Phone className="h-5 w-5 text-green-400" />
                 <span className="text-gray-400">۰۲۱-۱۲۳۴۵۶۷۸</span>
               </li>
-              <li className="flex items-center gap-3">
-                <Mail className="h-5 w-5 text-green-400" />
-                <span className="text-gray-400">info@alborz-insurance.ir</span>
-              </li>
               <li className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-green-400 mt-1" />
                 <span className="text-gray-400">تهران، خیابان ولیعصر، پلاک ۱۲۳</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Clock className="h-5 w-5 text-green-400" />
-                <span className="text-gray-400">شنبه تا پنج‌شنبه: ۸:۰۰ - ۱۷:۰۰</span>
               </li>
             </ul>
           </div>
@@ -99,7 +91,7 @@ export function Footer() {
       {/* Copyright */}
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
-          <p>© ۱۴۰۳ بیمه البرز. تمامی حقوق محفوظ است.</p>
+          <p>© ۱۴۰۴ بیمه البرز. تمامی حقوق محفوظ است.</p>
           <div className="flex gap-6 mt-4 md:mt-0">
             <a href="#" className="hover:text-green-400 transition-colors">حریم خصوصی</a>
             <a href="#" className="hover:text-green-400 transition-colors">شرایط استفاده</a>

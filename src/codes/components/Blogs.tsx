@@ -5,22 +5,22 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useBlogs } from '../hooks/useBlogs';
 import { useNavigate } from 'react-router-dom';
 
-export function BlogSection() {
+export function Blogs() {
   const { blogs } = useBlogs();
   const navigate = useNavigate();
 
   return (
-    <section className="py-16 bg-white">
-      <div className="container mx-auto px-4">
+    <div className="min-h-screen bg-white">
+      <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-3xl mb-4">آخرین مطالب وبلاگ</h2>
+          <h1 className="text-4xl mb-4">وبلاگ بیمه البرز</h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
             مطالب مفید و آموزشی در زمینه بیمه برای آگاهی بیشتر شما
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {blogs.slice(0, 3).map((post) => (
+          {blogs.map((post) => (
             <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 border-0 shadow-md">
               <div className="relative h-48 overflow-hidden">
                 <ImageWithFallback
@@ -34,7 +34,7 @@ export function BlogSection() {
                   </span>
                 </div>
               </div>
-              
+
               <CardHeader>
                 <CardTitle className="text-lg line-clamp-2 hover:text-green-600 transition-colors">
                   {post.title}
@@ -43,7 +43,7 @@ export function BlogSection() {
                   {post.excerpt}
                 </CardDescription>
               </CardHeader>
-              
+
               <CardContent>
                 <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                   <div className="flex items-center gap-2">
@@ -55,7 +55,7 @@ export function BlogSection() {
                     <span>{post.date}</span>
                   </div>
                 </div>
-                
+
                 <Button variant="ghost" className="w-full group" onClick={() => navigate(`/blogs/${post.id}`)}>
                   ادامه مطلب
                   <ArrowLeft className="h-4 w-4 mr-2 group-hover:translate-x-1 transition-transform" />
@@ -64,13 +64,7 @@ export function BlogSection() {
             </Card>
           ))}
         </div>
-
-        <div className="text-center mt-12">
-          <Button variant="outline" size="lg" onClick={() => navigate('/blogs')}>
-            مشاهده همه مطالب
-          </Button>
-        </div>
       </div>
-    </section>
+    </div>
   );
 }

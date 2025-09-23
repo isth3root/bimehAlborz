@@ -2,7 +2,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/
 import { Button } from "./ui/button";
 import { Car, Shield, Flame, Users, Home, Briefcase } from "lucide-react";
 
-export function ServicesSection() {
+interface ServicesSectionProps {
+  onNavigate: (page: string) => void;
+}
+
+export function ServicesSection({ onNavigate }: ServicesSectionProps) {
   const services = [
     {
       id: 1,
@@ -82,12 +86,12 @@ export function ServicesSection() {
                   <ul className="space-y-2 mb-6">
                     {service.features.map((feature, index) => (
                       <li key={index} className="flex items-center text-sm text-gray-600">
-                        <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                        <div className="w-2 h-2 bg-green-500 rounded-full mx-2"></div>
                         {feature}
                       </li>
                     ))}
                   </ul>
-                  <Button className="w-full" variant="outline">
+                  <Button className="w-full" variant="outline" onClick={() => onNavigate('services')}>
                     اطلاعات بیشتر
                   </Button>
                 </CardContent>
