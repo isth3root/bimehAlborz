@@ -1,5 +1,4 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { Badge } from "./ui/badge";
 import { Users, Award, Shield, Heart, Target, TrendingUp } from "lucide-react";
 
 export function AboutUs() {

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Button } from "./ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ImageWithFallback } from './figma/ImageWithFallback';
 
 interface HeroSliderProps {
@@ -40,14 +39,6 @@ export function HeroSlider({ onNavigate }: HeroSliderProps) {
     }, 5000);
     return () => clearInterval(timer);
   }, [slides.length]);
-
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-  };
 
   return (
     <div className="relative h-[500px] bg-gradient-to-r from-green-600 to-green-700 overflow-hidden">

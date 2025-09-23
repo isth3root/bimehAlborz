@@ -1,7 +1,7 @@
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Separator } from "./ui/separator";
-import { Phone, Mail, MapPin, Clock, Facebook, Instagram, Twitter, Linkedin } from "lucide-react";
+import { Phone, MapPin, Instagram, Twitter, Linkedin } from "lucide-react";
 
 export function Footer() {
   return (
@@ -33,9 +33,7 @@ export function Footer() {
               <Button variant="ghost" size="sm" className="p-2 text-gray-400 hover:text-green-400">
                 <Linkedin className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="sm" className="p-2 text-gray-400 hover:text-green-400">
-                <Facebook className="h-5 w-5" />
-              </Button>
+              
             </div>
           </div>
 

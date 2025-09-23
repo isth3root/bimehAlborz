@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
-import { Menu, User, Phone, Mail } from "lucide-react";
+import { Menu, User, Phone } from "lucide-react";
 
 interface HeaderProps {
   onNavigate: (page: string) => void;
