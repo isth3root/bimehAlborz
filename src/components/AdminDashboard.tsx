@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
@@ -99,6 +99,7 @@ interface Installment {
 }
 
 export function AdminDashboard({ onLogout }: AdminDashboardProps) {
+  const datePickerRef = useRef<HTMLDivElement>(null);
   const { blogs, addBlog, updateBlog, deleteBlog } = useBlogs();
   const [searchQuery, setSearchQuery] = useState("");
   const [customers, setCustomers] = useState<Customer[]>([
@@ -759,7 +760,16 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         افزودن مشتری
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg">
+                    <DialogContent
+                      onPointerDownOutside={(e) => {
+                        if (
+                          datePickerRef.current?.contains(e.target as Node)
+                        ) {
+                          e.preventDefault();
+                        }
+                      }}
+                      className="bg-white/95 backdrop-blur-sm border shadow-lg"
+                    >
                       <DialogHeader>
                         <DialogTitle>افزودن مشتری جدید</DialogTitle>
                         <DialogDescription>
@@ -948,7 +958,14 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 open={isEditDialogOpen}
                 onOpenChange={setIsEditDialogOpen}
               >
-                <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg">
+                <DialogContent
+                  onPointerDownOutside={(e) => {
+                    if (datePickerRef.current?.contains(e.target as Node)) {
+                      e.preventDefault();
+                    }
+                  }}
+                  className="bg-white/95 backdrop-blur-sm border shadow-lg"
+                >
                   <DialogHeader>
                     <DialogTitle>ویرایش مشتری</DialogTitle>
                     <DialogDescription>
@@ -1079,7 +1096,16 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         صدور بیمه‌نامه
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg">
+                    <DialogContent
+                      onPointerDownOutside={(e) => {
+                        if (
+                          datePickerRef.current?.contains(e.target as Node)
+                        ) {
+                          e.preventDefault();
+                        }
+                      }}
+                      className="bg-white/95 backdrop-blur-sm border shadow-lg"
+                    >
                       <DialogHeader>
                         <DialogTitle>صدور بیمه‌نامه جدید</DialogTitle>
                         <DialogDescription>
@@ -1344,7 +1370,14 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 open={isEditPolicyDialogOpen}
                 onOpenChange={setIsEditPolicyDialogOpen}
               >
-                <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg">
+                <DialogContent
+                  onPointerDownOutside={(e) => {
+                    if (datePickerRef.current?.contains(e.target as Node)) {
+                      e.preventDefault();
+                    }
+                  }}
+                  className="bg-white/95 backdrop-blur-sm border shadow-lg"
+                >
                   <DialogHeader>
                     <DialogTitle>ویرایش بیمه‌نامه</DialogTitle>
                     <DialogDescription>
@@ -1542,7 +1575,16 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         افزودن قسط
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg">
+                    <DialogContent
+                      onPointerDownOutside={(e) => {
+                        if (
+                          datePickerRef.current?.contains(e.target as Node)
+                        ) {
+                          e.preventDefault();
+                        }
+                      }}
+                      className="bg-white/95 backdrop-blur-sm border shadow-lg"
+                    >
                       <DialogHeader>
                         <DialogTitle>افزودن قسط جدید</DialogTitle>
                         <DialogDescription>
@@ -1824,7 +1866,14 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 open={isEditInstallmentDialogOpen}
                 onOpenChange={setIsEditInstallmentDialogOpen}
               >
-                <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg">
+                <DialogContent
+                  onPointerDownOutside={(e) => {
+                    if (datePickerRef.current?.contains(e.target as Node)) {
+                      e.preventDefault();
+                    }
+                  }}
+                  className="bg-white/95 backdrop-blur-sm border shadow-lg"
+                >
                   <DialogHeader>
                     <DialogTitle>ویرایش قسط</DialogTitle>
                     <DialogDescription>
@@ -2007,7 +2056,16 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         افزودن مقاله
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg max-w-2xl">
+                    <DialogContent
+                      onPointerDownOutside={(e) => {
+                        if (
+                          datePickerRef.current?.contains(e.target as Node)
+                        ) {
+                          e.preventDefault();
+                        }
+                      }}
+                      className="bg-white/95 backdrop-blur-sm border shadow-lg max-w-2xl"
+                    >
                       <DialogHeader>
                         <DialogTitle>افزودن مقاله جدید</DialogTitle>
                         <DialogDescription>
@@ -2236,7 +2294,14 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 open={isEditBlogDialogOpen}
                 onOpenChange={setIsEditBlogDialogOpen}
               >
-                <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg max-w-2xl">
+                <DialogContent
+                  onPointerDownOutside={(e) => {
+                    if (datePickerRef.current?.contains(e.target as Node)) {
+                      e.preventDefault();
+                    }
+                  }}
+                  className="bg-white/95 backdrop-blur-sm border shadow-lg max-w-2xl"
+                >
                   <DialogHeader>
                     <DialogTitle>ویرایش مقاله</DialogTitle>
                     <DialogDescription>
@@ -2390,6 +2455,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           typeof window !== "undefined" &&
           createPortal(
             <div
+              ref={datePickerRef}
               style={{
                 position: "fixed",
                 left: 0,
@@ -2403,7 +2469,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 display: "flex",
                 justifyContent: "center",
               }}
-              onClick={(e) => e.stopPropagation()}
             >
               <WheelDatePicker
                 value={openDatePicker.value}

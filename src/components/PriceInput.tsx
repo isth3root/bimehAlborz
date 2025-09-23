@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef } from 'react';
 import { Input } from './ui/input';
 
 interface PriceInputProps {
@@ -8,30 +8,35 @@ interface PriceInputProps {
   className?: string;
 }
 
-export function PriceInput({ value, onChange, placeholder, className }: PriceInputProps) {
-  const [displayValue, setDisplayValue] = useState('');
+export const PriceInput = forwardRef<HTMLInputElement, PriceInputProps>(
+  ({ value, onChange, placeholder, className }, ref) => {
+    const [displayValue, setDisplayValue] = useState('');
 
-  useEffect(() => {
-    // Format the value for display
-    const numericValue = value.replace(/[^\d]/g, '');
-    const formatted = numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    setDisplayValue(formatted);
-  }, [value]);
+    useEffect(() => {
+      // Format the value for display
+      const numericValue = value.replace(/[^\d]/g, '');
+      const formatted = numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      setDisplayValue(formatted);
+    }, [value]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value.replace(/[^\d,]/g, '');
-    // Remove commas for storage
-    const numericValue = inputValue.replace(/,/g, '');
-    onChange(numericValue);
-  };
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const inputValue = e.target.value.replace(/[^\d,]/g, '');
+      // Remove commas for storage
+      const numericValue = inputValue.replace(/,/g, '');
+      onChange(numericValue);
+    };
 
-  return (
-    <Input
-      type="text"
-      value={displayValue}
-      onChange={handleChange}
-      placeholder={placeholder}
-      className={className}
-    />
-  );
-}
+    return (
+      <Input
+        type="text"
+        value={displayValue}
+        onChange={handleChange}
+        placeholder={placeholder}
+        className={className}
+        ref={ref}
+      />
+    );
+  }
+);
+
+PriceInput.displayName = 'PriceInput';
