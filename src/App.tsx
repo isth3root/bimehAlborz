@@ -30,7 +30,10 @@ function ScrollToTop() {
 }
 
 function AppContent() {
-  const [userType, setUserType] = useState<UserType>(null);
+  const [userType, setUserType] = useState<UserType>(() => {
+    const saved = localStorage.getItem('userType');
+    return saved as UserType || null;
+  });
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -40,11 +43,13 @@ function AppContent() {
 
   const handleLogin = (type: 'customer' | 'admin') => {
     setUserType(type);
+    localStorage.setItem('userType', type);
     navigate(type === 'customer' ? '/customer-dashboard' : '/admin-dashboard');
   };
 
   const handleLogout = () => {
     setUserType(null);
+    localStorage.removeItem('userType');
     navigate('/');
   };
 

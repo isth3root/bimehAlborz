@@ -63,7 +63,7 @@ export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
                   onChange={(e) => setNationalCode(e.target.value)}
                   maxLength={10}
                   required
-                  className="text-left"
+                  className="text-right"
                 />
               </div>
               
@@ -76,7 +76,7 @@ export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
                   value={insuranceCode}
                   onChange={(e) => setInsuranceCode(e.target.value)}
                   required
-                  className="text-left"
+                  className="text-right"
                 />
               </div>
 

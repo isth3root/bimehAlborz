@@ -529,9 +529,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>مدیریت مشتریان</CardTitle>
-                    <CardDescription>
-                      لیست مشتریان و مدیریت اطلاعات آنها
-                    </CardDescription>
                   </div>
                   <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                     <DialogTrigger asChild>
@@ -580,6 +577,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
                       placeholder="جستجو در مشتریان..."
+                      dir='rtl'
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pr-10"
@@ -684,9 +682,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>مدیریت بیمه‌نامه‌ها</CardTitle>
-                    <CardDescription>
-                      لیست بیمه‌نامه‌ها و وضعیت آنها
-                    </CardDescription>
                   </div>
                   <Dialog open={isAddPolicyDialogOpen} onOpenChange={setIsAddPolicyDialogOpen}>
                     <DialogTrigger asChild>
@@ -715,12 +710,14 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="policy-startDate" className="text-right">تاریخ شروع</Label>
-                          <InputDatePicker
-                            value={formDataPolicy.startDate ? moment(formDataPolicy.startDate, 'jYYYY/jMM/jDD') : null}
-                            onChange={(moment) => setFormDataPolicy({ ...formDataPolicy, startDate: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
-                            className="col-span-3"
-                            responsive="auto"
-                          />
+                          <div className="col-span-3 relative z-50">
+                            <InputDatePicker
+                              value={formDataPolicy.startDate ? moment(formDataPolicy.startDate, 'jYYYY/jMM/jDD') : null}
+                              onChange={(moment) => setFormDataPolicy({ ...formDataPolicy, startDate: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
+                              className="w-full"
+                              
+                            />
+                          </div>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="policy-endDate" className="text-right">تاریخ انقضا</Label>
@@ -728,7 +725,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                             value={formDataPolicy.endDate ? moment(formDataPolicy.endDate, 'jYYYY/jMM/jDD') : null}
                             onChange={(moment) => setFormDataPolicy({ ...formDataPolicy, endDate: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
                             className="col-span-3"
-                            responsive="auto"
+                            
                           />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
@@ -753,6 +750,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
                       placeholder="جستجو بر اساس شماره بیمه‌نامه..."
+                      dir='rtl'
                       value={policySearchQuery}
                       onChange={(e) => setPolicySearchQuery(e.target.value)}
                       className="pr-10"
@@ -843,7 +841,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         value={formDataPolicy.startDate ? moment(formDataPolicy.startDate, 'jYYYY/jMM/jDD') : null}
                         onChange={(moment) => setFormDataPolicy({ ...formDataPolicy, startDate: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
                         className="col-span-3"
-                        responsive="auto"
+                        
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
@@ -852,7 +850,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         value={formDataPolicy.endDate ? moment(formDataPolicy.endDate, 'jYYYY/jMM/jDD') : null}
                         onChange={(moment) => setFormDataPolicy({ ...formDataPolicy, endDate: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
                         className="col-span-3"
-                        responsive="auto"
+                        
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
@@ -879,9 +877,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>مدیریت اقساط</CardTitle>
-                    <CardDescription>
-                      پیگیری اقساط و معوقات
-                    </CardDescription>
                   </div>
                   <Dialog open={isAddInstallmentDialogOpen} onOpenChange={setIsAddInstallmentDialogOpen}>
                     <DialogTrigger asChild>
@@ -914,7 +909,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                             value={formDataInstallment.dueDate ? moment(formDataInstallment.dueDate, 'jYYYY/jMM/jDD') : null}
                             onChange={(moment) => setFormDataInstallment({ ...formDataInstallment, dueDate: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
                             className="col-span-3"
-                            responsive="auto"
+                            
                           />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
@@ -947,6 +942,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
                       placeholder="جستجو بر اساس نام مشتری یا نوع بیمه..."
+                      dir="rtl"
                       value={installmentSearchQuery}
                       onChange={(e) => setInstallmentSearchQuery(e.target.value)}
                       className="pr-10"
@@ -1039,7 +1035,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         value={formDataInstallment.dueDate ? moment(formDataInstallment.dueDate, 'jYYYY/jMM/jDD') : null}
                         onChange={(moment) => setFormDataInstallment({ ...formDataInstallment, dueDate: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
                         className="col-span-3"
-                        responsive="auto"
+                        
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
@@ -1074,9 +1070,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>مدیریت وبلاگ</CardTitle>
-                    <CardDescription>
-                      لیست مقالات وبلاگ و مدیریت آنها
-                    </CardDescription>
                   </div>
                   <Dialog open={isAddBlogDialogOpen} onOpenChange={setIsAddBlogDialogOpen}>
                     <DialogTrigger asChild>
@@ -1113,7 +1106,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                             value={formDataBlog.date ? moment(formDataBlog.date, 'jYYYY/jMM/jDD') : null}
                             onChange={(moment) => setFormDataBlog({ ...formDataBlog, date: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
                             className="col-span-3"
-                            responsive="auto"
+                            
                           />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
@@ -1138,6 +1131,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
                       placeholder="جستجو در مقالات..."
+                      dir='rtl'
                       value={blogSearchQuery}
                       onChange={(e) => setBlogSearchQuery(e.target.value)}
                       className="pr-10"
@@ -1224,7 +1218,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         value={formDataBlog.date ? moment(formDataBlog.date, 'jYYYY/jMM/jDD') : null}
                         onChange={(moment) => setFormDataBlog({ ...formDataBlog, date: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
                         className="col-span-3"
-                        responsive="auto"
+                        
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
