@@ -1,7 +1,7 @@
 @custom-variant dark (&:is(.dark *));
 @font-face {
   font-family: "Estedad";
-  src: url("./fonts/Estedad-Variable.ttf") format("truetype");
+  src: url("../fonts/Estedad-Variable.ttf") format("truetype");
   font-weight: 100 900;
   font-stretch: 75% 125%;
   font-display: swap;
