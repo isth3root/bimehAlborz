@@ -81,19 +81,6 @@ export function HeroSlider({ onNavigate }: HeroSliderProps) {
         </div>
       </div>
 
-      {/* Navigation buttons */}
-      <button 
-        onClick={prevSlide}
-        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full backdrop-blur-sm transition-colors"
-      >
-        <ChevronLeft className="h-6 w-6" />
-      </button>
-      <button 
-        onClick={nextSlide}
-        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full backdrop-blur-sm transition-colors"
-      >
-        <ChevronRight className="h-6 w-6" />
-      </button>
 
       {/* Indicators */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">

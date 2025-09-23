@@ -9,21 +9,21 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { PersianDateInput } from "./PersianDateInput";
+import { PriceInput } from "./PriceInput";
 import { useBlogs } from '../hooks/useBlogs';
+import { motion } from 'framer-motion';
 import type { Blog } from '../data/blogsData';
 import {
   Users,
   FileText,
   CreditCard,
-  TrendingUp,
   Search,
   Plus,
   Edit,
   Trash2,
   LogOut,
-  Settings,
   DollarSign,
-  Calendar
 } from "lucide-react";
 
 interface AdminDashboardProps {
@@ -192,6 +192,15 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [isEditBlogDialogOpen, setIsEditBlogDialogOpen] = useState(false);
   const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
   const [formDataBlog, setFormDataBlog] = useState({ title: '', excerpt: '', content: '', author: '', date: '', imageUrl: '', category: '' });
+  const [activeTab, setActiveTab] = useState('customers');
+
+  const tabIndex = { customers: 0, policies: 1, installments: 2, blogs: 3 }[activeTab] || 0;
+
+  const formatPrice = (price: string) => {
+    const numeric = price.replace(/[^\d]/g, '');
+    const formatted = numeric.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return `${formatted} ریال`;
+  };
 
   const filteredCustomers = customers.filter(customer =>
     customer.name.toLowerCase().includes(searchQuery.toLowerCase()) || customer.nationalCode.includes(searchQuery)
@@ -240,7 +249,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     setIsEditDialogOpen(true);
   };
 
-  const filteredPolicies = policies.filter(policy => policy.id.toLowerCase().includes(policySearchQuery.toLowerCase()) || policy.customerName.toLowerCase().includes(policySearchQuery.toLowerCase()));
+  //const filteredPolicies = policies.filter(policy => policy.id.toLowerCase().includes(policySearchQuery.toLowerCase()) || policy.customerName.toLowerCase().includes(policySearchQuery.toLowerCase()));
 
   const handleAddPolicy = () => {
     const newPolicy: Policy = {
@@ -496,12 +505,18 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         </div>
 
         {/* Management Tabs */}
-        <Tabs defaultValue="customers" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-gray-100 p-1 rounded-lg">
-            <TabsTrigger value="customers" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">مدیریت مشتریان</TabsTrigger>
-            <TabsTrigger value="policies" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">مدیریت بیمه‌نامه‌ها</TabsTrigger>
-            <TabsTrigger value="installments" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">مدیریت اقساط</TabsTrigger>
-            <TabsTrigger value="blogs" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">مدیریت وبلاگ</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="relative grid w-full grid-cols-4 bg-gray-100 p-1 rounded-lg">
+            <motion.div
+              className="absolute top-1 bottom-1 bg-white rounded-md shadow-sm"
+              style={{ width: 'calc(25% - 4px)' }}
+              animate={{ left: `calc(${tabIndex} * 25% + 2px)` }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            />
+            <TabsTrigger value="customers" className="relative z-10 data-[state=active]:bg-transparent data-[state=active]:shadow-none"> مشتریان</TabsTrigger>
+            <TabsTrigger value="policies" className="relative z-10 data-[state=active]:bg-transparent data-[state=active]:shadow-none"> بیمه‌نامه‌ها</TabsTrigger>
+            <TabsTrigger value="installments" className="relative z-10 data-[state=active]:bg-transparent data-[state=active]:shadow-none"> اقساط</TabsTrigger>
+            <TabsTrigger value="blogs" className="relative z-10 data-[state=active]:bg-transparent data-[state=active]:shadow-none"> وبلاگ</TabsTrigger>
           </TabsList>
 
           {/* Customers Management */}
@@ -696,16 +711,16 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           <Input id="policy-vehicle" value={formDataPolicy.vehicle} onChange={(e) => setFormDataPolicy({...formDataPolicy, vehicle: e.target.value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="policy-startDate" className="text-right">تاریخ شروع</Label>
-                          <Input id="policy-startDate" type="date" value={formDataPolicy.startDate} onChange={(e) => setFormDataPolicy({...formDataPolicy, startDate: e.target.value})} className="col-span-3" />
+                          <Label className="text-right">تاریخ شروع</Label>
+                          <PersianDateInput value={formDataPolicy.startDate} onChange={(value) => setFormDataPolicy({...formDataPolicy, startDate: value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="policy-endDate" className="text-right">تاریخ انقضا</Label>
-                          <Input id="policy-endDate" type="date" value={formDataPolicy.endDate} onChange={(e) => setFormDataPolicy({...formDataPolicy, endDate: e.target.value})} className="col-span-3" />
+                          <Label className="text-right">تاریخ انقضا</Label>
+                          <PersianDateInput value={formDataPolicy.endDate} onChange={(value) => setFormDataPolicy({...formDataPolicy, endDate: value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="policy-premium" className="text-right">حق بیمه</Label>
-                          <Input id="policy-premium" value={formDataPolicy.premium} onChange={(e) => setFormDataPolicy({...formDataPolicy, premium: e.target.value})} className="col-span-3" />
+                          <Label className="text-right">حق بیمه (ریال)</Label>
+                          <PriceInput value={formDataPolicy.premium} onChange={(value) => setFormDataPolicy({...formDataPolicy, premium: value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="policy-pdf" className="text-right">فایل PDF</Label>
@@ -755,7 +770,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         <TableCell>{policy.vehicle}</TableCell>
                         <TableCell>{policy.startDate}</TableCell>
                         <TableCell>{policy.endDate}</TableCell>
-                        <TableCell>{policy.premium}</TableCell>
+                        <TableCell>{formatPrice(policy.premium)}</TableCell>
                         <TableCell>{getStatusBadge(policy.status)}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
@@ -810,16 +825,16 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       <Input id="edit-policy-vehicle" value={formDataPolicy.vehicle} onChange={(e) => setFormDataPolicy({...formDataPolicy, vehicle: e.target.value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit-policy-startDate" className="text-right">تاریخ شروع</Label>
-                      <Input id="edit-policy-startDate" type="date" value={formDataPolicy.startDate} onChange={(e) => setFormDataPolicy({...formDataPolicy, startDate: e.target.value})} className="col-span-3" />
+                      <Label className="text-right">تاریخ شروع</Label>
+                      <PersianDateInput value={formDataPolicy.startDate} onChange={(value) => setFormDataPolicy({...formDataPolicy, startDate: value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit-policy-endDate" className="text-right">تاریخ انقضا</Label>
-                      <Input id="edit-policy-endDate" type="date" value={formDataPolicy.endDate} onChange={(e) => setFormDataPolicy({...formDataPolicy, endDate: e.target.value})} className="col-span-3" />
+                      <Label className="text-right">تاریخ انقضا</Label>
+                      <PersianDateInput value={formDataPolicy.endDate} onChange={(value) => setFormDataPolicy({...formDataPolicy, endDate: value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit-policy-premium" className="text-right">حق بیمه</Label>
-                      <Input id="edit-policy-premium" value={formDataPolicy.premium} onChange={(e) => setFormDataPolicy({...formDataPolicy, premium: e.target.value})} className="col-span-3" />
+                      <Label className="text-right">حق بیمه (ریال)</Label>
+                      <PriceInput value={formDataPolicy.premium} onChange={(value) => setFormDataPolicy({...formDataPolicy, premium: value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-policy-pdf" className="text-right">فایل PDF</Label>
@@ -867,12 +882,12 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           <Input id="installment-policyType" value={formDataInstallment.policyType} onChange={(e) => setFormDataInstallment({...formDataInstallment, policyType: e.target.value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="installment-amount" className="text-right">مبلغ قسط</Label>
-                          <Input id="installment-amount" value={formDataInstallment.amount} onChange={(e) => setFormDataInstallment({...formDataInstallment, amount: e.target.value})} className="col-span-3" />
+                          <Label className="text-right">مبلغ قسط (ریال)</Label>
+                          <PriceInput value={formDataInstallment.amount} onChange={(value) => setFormDataInstallment({...formDataInstallment, amount: value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="installment-dueDate" className="text-right">سررسید</Label>
-                          <Input id="installment-dueDate" type="date" value={formDataInstallment.dueDate} onChange={(e) => setFormDataInstallment({...formDataInstallment, dueDate: e.target.value})} className="col-span-3" />
+                          <Label className="text-right">سررسید</Label>
+                          <PersianDateInput value={formDataInstallment.dueDate} onChange={(value) => setFormDataInstallment({...formDataInstallment, dueDate: value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="installment-status" className="text-right">وضعیت</Label>
@@ -928,7 +943,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       <TableRow key={installment.id}>
                         <TableCell>{installment.customerName}</TableCell>
                         <TableCell>{installment.policyType}</TableCell>
-                        <TableCell>{installment.amount}</TableCell>
+                        <TableCell>{formatPrice(installment.amount)}</TableCell>
                         <TableCell>{installment.dueDate}</TableCell>
                         <TableCell>
                           {installment.daysOverdue > 0 ? (
@@ -987,12 +1002,12 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       <Input id="edit-installment-policyType" value={formDataInstallment.policyType} onChange={(e) => setFormDataInstallment({...formDataInstallment, policyType: e.target.value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit-installment-amount" className="text-right">مبلغ قسط</Label>
-                      <Input id="edit-installment-amount" value={formDataInstallment.amount} onChange={(e) => setFormDataInstallment({...formDataInstallment, amount: e.target.value})} className="col-span-3" />
+                      <Label className="text-right">مبلغ قسط (ریال)</Label>
+                      <PriceInput value={formDataInstallment.amount} onChange={(value) => setFormDataInstallment({...formDataInstallment, amount: value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit-installment-dueDate" className="text-right">سررسید</Label>
-                      <Input id="edit-installment-dueDate" type="date" value={formDataInstallment.dueDate} onChange={(e) => setFormDataInstallment({...formDataInstallment, dueDate: e.target.value})} className="col-span-3" />
+                      <Label className="text-right">سررسید</Label>
+                      <PersianDateInput value={formDataInstallment.dueDate} onChange={(value) => setFormDataInstallment({...formDataInstallment, dueDate: value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-installment-status" className="text-right">وضعیت</Label>
@@ -1060,12 +1075,12 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           <Input id="blog-author" value={formDataBlog.author} onChange={(e) => setFormDataBlog({...formDataBlog, author: e.target.value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="blog-date" className="text-right">تاریخ</Label>
-                          <Input id="blog-date" type="date" value={formDataBlog.date} onChange={(e) => setFormDataBlog({...formDataBlog, date: e.target.value})} className="col-span-3" />
+                          <Label className="text-right">تاریخ</Label>
+                          <PersianDateInput value={formDataBlog.date} onChange={(value) => setFormDataBlog({...formDataBlog, date: value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="blog-imageUrl" className="text-right">آدرس تصویر</Label>
-                          <Input id="blog-imageUrl" value={formDataBlog.imageUrl} onChange={(e) => setFormDataBlog({...formDataBlog, imageUrl: e.target.value})} className="col-span-3" />
+                          <Label htmlFor="blog-image" className="text-right">تصویر</Label>
+                          <Input id="blog-image" type="file" accept="image/*" onChange={(e) => setFormDataBlog({...formDataBlog, imageUrl: e.target.files ? e.target.files[0].name : ''})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="blog-category" className="text-right">دسته‌بندی</Label>
@@ -1166,12 +1181,12 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       <Input id="edit-blog-author" value={formDataBlog.author} onChange={(e) => setFormDataBlog({...formDataBlog, author: e.target.value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit-blog-date" className="text-right">تاریخ</Label>
-                      <Input id="edit-blog-date" type="date" value={formDataBlog.date} onChange={(e) => setFormDataBlog({...formDataBlog, date: e.target.value})} className="col-span-3" />
+                      <Label className="text-right">تاریخ</Label>
+                      <PersianDateInput value={formDataBlog.date} onChange={(value) => setFormDataBlog({...formDataBlog, date: value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit-blog-imageUrl" className="text-right">آدرس تصویر</Label>
-                      <Input id="edit-blog-imageUrl" value={formDataBlog.imageUrl} onChange={(e) => setFormDataBlog({...formDataBlog, imageUrl: e.target.value})} className="col-span-3" />
+                      <Label htmlFor="edit-blog-image" className="text-right">تصویر</Label>
+                      <Input id="edit-blog-image" type="file" accept="image/*" onChange={(e) => setFormDataBlog({...formDataBlog, imageUrl: e.target.files ? e.target.files[0].name : formDataBlog.imageUrl})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-blog-category" className="text-right">دسته‌بندی</Label>

@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Button } from "./ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import { Menu, User, Phone, Mail } from "lucide-react";
 
 interface HeaderProps {
@@ -7,6 +9,8 @@ interface HeaderProps {
 }
 
 export function Header({ onNavigate, currentPage }: HeaderProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <header className="bg-white shadow-sm border-b">
       {/* Top bar */}
@@ -74,9 +78,47 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
             </button>
           </nav>
 
-          <Button className="md:hidden" variant="ghost" size="sm">
-            <Menu className="h-5 w-5" />
-          </Button>
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild>
+              <Button className="md:hidden" variant="ghost" size="sm">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+              <nav className="flex flex-col gap-4 mt-8">
+                <button
+                  onClick={() => { onNavigate('/'); setIsOpen(false); }}
+                  className={`text-right transition-colors ${currentPage === 'home' ? 'text-green-600 font-semibold' : 'text-gray-700 hover:text-green-600'}`}
+                >
+                  صفحه اصلی
+                </button>
+                <button
+                  onClick={() => { onNavigate('services'); setIsOpen(false); }}
+                  className={`text-right transition-colors ${currentPage === 'services' ? 'text-green-600 font-semibold' : 'text-gray-700 hover:text-green-600'}`}
+                >
+                  خدمات
+                </button>
+                <button
+                  onClick={() => { onNavigate('blogs'); setIsOpen(false); }}
+                  className={`text-right transition-colors ${currentPage === 'blogs' ? 'text-green-600 font-semibold' : 'text-gray-700 hover:text-green-600'}`}
+                >
+                  وبلاگ
+                </button>
+                <button
+                  onClick={() => { onNavigate('about'); setIsOpen(false); }}
+                  className={`text-right transition-colors ${currentPage === 'about' ? 'text-green-600 font-semibold' : 'text-gray-700 hover:text-green-600'}`}
+                >
+                  درباره ما
+                </button>
+                <button
+                  onClick={() => { onNavigate('contact'); setIsOpen(false); }}
+                  className={`text-right transition-colors ${currentPage === 'contact' ? 'text-green-600 font-semibold' : 'text-gray-700 hover:text-green-600'}`}
+                >
+                  تماس با ما
+                </button>
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>

@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Header } from './components/Header';
 import { HeroSlider } from './components/HeroSlider';
 import { ServicesSection } from './components/ServicesSection';
@@ -17,6 +18,16 @@ import { Blogs } from './components/Blogs';
 import { BlogDetail } from './components/BlogDetail';
 
 type UserType = 'customer' | 'admin' | null;
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
 
 function AppContent() {
   const [userType, setUserType] = useState<UserType>(null);
@@ -40,14 +51,43 @@ function AppContent() {
   const currentPage = location.pathname.slice(1) || 'home';
 
   return (
-    <Routes>
+    <>
+      <ScrollToTop />
+      <Routes>
       <Route path="/" element={
         <div className="min-h-screen bg-white">
           <Header onNavigate={handleNavigate} currentPage={currentPage} />
-          <HeroSlider onNavigate={handleNavigate} />
-          <ServicesSection onNavigate={handleNavigate} />
-          <BlogSection />
-          <FAQSection />
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <HeroSlider onNavigate={handleNavigate} />
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            viewport={{ once: true }}
+          >
+            <ServicesSection onNavigate={handleNavigate} />
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            viewport={{ once: true }}
+          >
+            <BlogSection />
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            viewport={{ once: true }}
+          >
+            <FAQSection />
+          </motion.div>
           <Footer />
         </div>
       } />
@@ -75,26 +115,45 @@ function AppContent() {
       <Route path="/services" element={
         <div className="min-h-screen bg-white">
           <Header onNavigate={handleNavigate} currentPage={currentPage} />
-          <Services />
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <Services />
+          </motion.div>
           <Footer />
         </div>
       } />
       <Route path="/blogs" element={
         <div className="min-h-screen bg-white">
           <Header onNavigate={handleNavigate} currentPage={currentPage} />
-          <Blogs />
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <Blogs />
+          </motion.div>
           <Footer />
         </div>
       } />
       <Route path="/blogs/:id" element={
         <div className="min-h-screen bg-white">
           <Header onNavigate={handleNavigate} currentPage={currentPage} />
-          <BlogDetail />
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <BlogDetail />
+          </motion.div>
           <Footer />
         </div>
       } />
       <Route path="*" element={<NotFound />} />
     </Routes>
+   </>
   );
 }
 
