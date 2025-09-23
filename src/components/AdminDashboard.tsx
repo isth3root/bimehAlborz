@@ -1,5 +1,4 @@
 import { useState, useRef } from "react";
-import { createPortal } from "react-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -41,6 +40,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "./ui/popover";
 import { PriceInput } from "./PriceInput";
 import { useBlogs } from "../hooks/useBlogs";
 import { motion } from "framer-motion";
@@ -99,7 +103,6 @@ interface Installment {
 }
 
 export function AdminDashboard({ onLogout }: AdminDashboardProps) {
-  const datePickerRef = useRef<HTMLDivElement>(null);
   const { blogs, addBlog, updateBlog, deleteBlog } = useBlogs();
   const [searchQuery, setSearchQuery] = useState("");
   const [customers, setCustomers] = useState<Customer[]>([
@@ -591,12 +594,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     }
   };
 
-  const [openDatePicker, setOpenDatePicker] = useState<null | {
-    type: "policyStart" | "policyEnd" | "installmentDue" | "blogDate";
-    onChange: (date: string) => void;
-    value: string;
-  }>(null);
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -760,16 +757,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         افزودن مشتری
                       </Button>
                     </DialogTrigger>
-                    <DialogContent
-                      onPointerDownOutside={(e) => {
-                        if (
-                          datePickerRef.current?.contains(e.target as Node)
-                        ) {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="bg-white/95 backdrop-blur-sm border shadow-lg"
-                    >
+                    <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg">
                       <DialogHeader>
                         <DialogTitle>افزودن مشتری جدید</DialogTitle>
                         <DialogDescription>
@@ -958,14 +946,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 open={isEditDialogOpen}
                 onOpenChange={setIsEditDialogOpen}
               >
-                <DialogContent
-                  onPointerDownOutside={(e) => {
-                    if (datePickerRef.current?.contains(e.target as Node)) {
-                      e.preventDefault();
-                    }
-                  }}
-                  className="bg-white/95 backdrop-blur-sm border shadow-lg"
-                >
+                <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg">
                   <DialogHeader>
                     <DialogTitle>ویرایش مشتری</DialogTitle>
                     <DialogDescription>
@@ -1096,16 +1077,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         صدور بیمه‌نامه
                       </Button>
                     </DialogTrigger>
-                    <DialogContent
-                      onPointerDownOutside={(e) => {
-                        if (
-                          datePickerRef.current?.contains(e.target as Node)
-                        ) {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="bg-white/95 backdrop-blur-sm border shadow-lg"
-                    >
+                    <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg">
                       <DialogHeader>
                         <DialogTitle>صدور بیمه‌نامه جدید</DialogTitle>
                         <DialogDescription>
@@ -1179,25 +1151,31 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                             تاریخ شروع
                           </Label>
                           <div className="col-span-3">
-                            <Input
-                              readOnly
-                              value={formDataPolicy.startDate}
-                              placeholder="انتخاب تاریخ شروع"
-                              onClick={() =>
-                                setOpenDatePicker({
-                                  type: "policyStart",
-                                  value: formDataPolicy.startDate,
-                                  onChange: (date: string) => {
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Input
+                                  readOnly
+                                  value={formDataPolicy.startDate}
+                                  placeholder="انتخاب تاریخ شروع"
+                                  className="col-span-3 cursor-pointer bg-white"
+                                />
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0">
+                                <WheelDatePicker
+                                  value={formDataPolicy.startDate}
+                                  onChange={(date: string) =>
                                     setFormDataPolicy({
                                       ...formDataPolicy,
                                       startDate: date,
-                                    });
-                                    setOpenDatePicker(null);
-                                  },
-                                })
-                              }
-                              className="col-span-3 cursor-pointer bg-white"
-                            />
+                                    })
+                                  }
+                                  minYear={1310}
+                                  maxYear={1410}
+                                  visibleCount={5}
+                                  indicatorBorderColor="green"
+                                />
+                              </PopoverContent>
+                            </Popover>
                           </div>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
@@ -1208,25 +1186,31 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                             تاریخ انقضا
                           </Label>
                           <div className="col-span-3">
-                            <Input
-                              readOnly
-                              value={formDataPolicy.endDate}
-                              placeholder="انتخاب تاریخ انقضا"
-                              onClick={() =>
-                                setOpenDatePicker({
-                                  type: "policyEnd",
-                                  value: formDataPolicy.endDate,
-                                  onChange: (date: string) => {
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Input
+                                  readOnly
+                                  value={formDataPolicy.endDate}
+                                  placeholder="انتخاب تاریخ انقضا"
+                                  className="col-span-3 cursor-pointer bg-white"
+                                />
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0">
+                                <WheelDatePicker
+                                  value={formDataPolicy.endDate}
+                                  onChange={(date: string) =>
                                     setFormDataPolicy({
                                       ...formDataPolicy,
                                       endDate: date,
-                                    });
-                                    setOpenDatePicker(null);
-                                  },
-                                })
-                              }
-                              className="col-span-3 cursor-pointer bg-white"
-                            />
+                                    })
+                                  }
+                                  minYear={1310}
+                                  maxYear={1410}
+                                  visibleCount={5}
+                                  indicatorBorderColor="green"
+                                />
+                              </PopoverContent>
+                            </Popover>
                           </div>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
@@ -1370,14 +1354,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 open={isEditPolicyDialogOpen}
                 onOpenChange={setIsEditPolicyDialogOpen}
               >
-                <DialogContent
-                  onPointerDownOutside={(e) => {
-                    if (datePickerRef.current?.contains(e.target as Node)) {
-                      e.preventDefault();
-                    }
-                  }}
-                  className="bg-white/95 backdrop-blur-sm border shadow-lg"
-                >
+                <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg">
                   <DialogHeader>
                     <DialogTitle>ویرایش بیمه‌نامه</DialogTitle>
                     <DialogDescription>
@@ -1451,25 +1428,31 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         تاریخ شروع
                       </Label>
                       <div className="col-span-3">
-                        <Input
-                          readOnly
-                          value={formDataPolicy.startDate}
-                          placeholder="انتخاب تاریخ شروع"
-                          onClick={() =>
-                            setOpenDatePicker({
-                              type: "policyStart",
-                              value: formDataPolicy.startDate,
-                              onChange: (date: string) => {
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Input
+                              readOnly
+                              value={formDataPolicy.startDate}
+                              placeholder="انتخاب تاریخ شروع"
+                              className="col-span-3 cursor-pointer bg-white"
+                            />
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                            <WheelDatePicker
+                              value={formDataPolicy.startDate}
+                              onChange={(date: string) =>
                                 setFormDataPolicy({
                                   ...formDataPolicy,
                                   startDate: date,
-                                });
-                                setOpenDatePicker(null);
-                              },
-                            })
-                          }
-                          className="col-span-3 cursor-pointer bg-white"
-                        />
+                                })
+                              }
+                              minYear={1310}
+                              maxYear={1410}
+                              visibleCount={5}
+                              indicatorBorderColor="green"
+                            />
+                          </PopoverContent>
+                        </Popover>
                       </div>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
@@ -1480,25 +1463,31 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         تاریخ انقضا
                       </Label>
                       <div className="col-span-3">
-                        <Input
-                          readOnly
-                          value={formDataPolicy.endDate}
-                          placeholder="انتخاب تاریخ انقضا"
-                          onClick={() =>
-                            setOpenDatePicker({
-                              type: "policyEnd",
-                              value: formDataPolicy.endDate,
-                              onChange: (date: string) => {
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Input
+                              readOnly
+                              value={formDataPolicy.endDate}
+                              placeholder="انتخاب تاریخ انقضا"
+                              className="col-span-3 cursor-pointer bg-white"
+                            />
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                            <WheelDatePicker
+                              value={formDataPolicy.endDate}
+                              onChange={(date: string) =>
                                 setFormDataPolicy({
                                   ...formDataPolicy,
                                   endDate: date,
-                                });
-                                setOpenDatePicker(null);
-                              },
-                            })
-                          }
-                          className="col-span-3 cursor-pointer bg-white"
-                        />
+                                })
+                              }
+                              minYear={1310}
+                              maxYear={1410}
+                              visibleCount={5}
+                              indicatorBorderColor="green"
+                            />
+                          </PopoverContent>
+                        </Popover>
                       </div>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
@@ -1575,16 +1564,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         افزودن قسط
                       </Button>
                     </DialogTrigger>
-                    <DialogContent
-                      onPointerDownOutside={(e) => {
-                        if (
-                          datePickerRef.current?.contains(e.target as Node)
-                        ) {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="bg-white/95 backdrop-blur-sm border shadow-lg"
-                    >
+                    <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg">
                       <DialogHeader>
                         <DialogTitle>افزودن قسط جدید</DialogTitle>
                         <DialogDescription>
@@ -1659,25 +1639,31 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                             سررسید
                           </Label>
                           <div className="col-span-3">
-                            <Input
-                              readOnly
-                              value={formDataInstallment.dueDate}
-                              placeholder="انتخاب سررسید"
-                              onClick={() =>
-                                setOpenDatePicker({
-                                  type: "installmentDue",
-                                  value: formDataInstallment.dueDate,
-                                  onChange: (date: string) => {
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Input
+                                  readOnly
+                                  value={formDataInstallment.dueDate}
+                                  placeholder="انتخاب سررسید"
+                                  className="col-span-3 cursor-pointer bg-white"
+                                />
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0">
+                                <WheelDatePicker
+                                  value={formDataInstallment.dueDate}
+                                  onChange={(date: string) =>
                                     setFormDataInstallment({
                                       ...formDataInstallment,
                                       dueDate: date,
-                                    });
-                                    setOpenDatePicker(null);
-                                  },
-                                })
-                              }
-                              className="col-span-3 cursor-pointer bg-white"
-                            />
+                                    })
+                                  }
+                                  minYear={1310}
+                                  maxYear={1410}
+                                  visibleCount={5}
+                                  indicatorBorderColor="green"
+                                />
+                              </PopoverContent>
+                            </Popover>
                           </div>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
@@ -1866,14 +1852,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 open={isEditInstallmentDialogOpen}
                 onOpenChange={setIsEditInstallmentDialogOpen}
               >
-                <DialogContent
-                  onPointerDownOutside={(e) => {
-                    if (datePickerRef.current?.contains(e.target as Node)) {
-                      e.preventDefault();
-                    }
-                  }}
-                  className="bg-white/95 backdrop-blur-sm border shadow-lg"
-                >
+                <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg">
                   <DialogHeader>
                     <DialogTitle>ویرایش قسط</DialogTitle>
                     <DialogDescription>
@@ -1948,25 +1927,31 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         سررسید
                       </Label>
                       <div className="col-span-3">
-                        <Input
-                          readOnly
-                          value={formDataInstallment.dueDate}
-                          placeholder="انتخاب سررسید"
-                          onClick={() =>
-                            setOpenDatePicker({
-                              type: "installmentDue",
-                              value: formDataInstallment.dueDate,
-                              onChange: (date: string) => {
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Input
+                              readOnly
+                              value={formDataInstallment.dueDate}
+                              placeholder="انتخاب سررسید"
+                              className="col-span-3 cursor-pointer bg-white"
+                            />
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                            <WheelDatePicker
+                              value={formDataInstallment.dueDate}
+                              onChange={(date: string) =>
                                 setFormDataInstallment({
                                   ...formDataInstallment,
                                   dueDate: date,
-                                });
-                                setOpenDatePicker(null);
-                              },
-                            })
-                          }
-                          className="col-span-3 cursor-pointer bg-white"
-                        />
+                                })
+                              }
+                              minYear={1310}
+                              maxYear={1410}
+                              visibleCount={5}
+                              indicatorBorderColor="green"
+                            />
+                          </PopoverContent>
+                        </Popover>
                       </div>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
@@ -2056,16 +2041,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         افزودن مقاله
                       </Button>
                     </DialogTrigger>
-                    <DialogContent
-                      onPointerDownOutside={(e) => {
-                        if (
-                          datePickerRef.current?.contains(e.target as Node)
-                        ) {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="bg-white/95 backdrop-blur-sm border shadow-lg max-w-2xl"
-                    >
+                    <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg max-w-2xl">
                       <DialogHeader>
                         <DialogTitle>افزودن مقاله جدید</DialogTitle>
                         <DialogDescription>
@@ -2146,22 +2122,28 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                             تاریخ
                           </Label>
                           <div className="col-span-3">
-                            <Input
-                              readOnly
-                              value={formDataBlog.date}
-                              placeholder="انتخاب تاریخ"
-                              onClick={() =>
-                                setOpenDatePicker({
-                                  type: "blogDate",
-                                  value: formDataBlog.date,
-                                  onChange: (date: string) => {
-                                    setFormDataBlog({ ...formDataBlog, date });
-                                    setOpenDatePicker(null);
-                                  },
-                                })
-                              }
-                              className="col-span-3 cursor-pointer bg-white"
-                            />
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Input
+                                  readOnly
+                                  value={formDataBlog.date}
+                                  placeholder="انتخاب تاریخ"
+                                  className="col-span-3 cursor-pointer bg-white"
+                                />
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0">
+                                <WheelDatePicker
+                                  value={formDataBlog.date}
+                                  onChange={(date: string) =>
+                                    setFormDataBlog({ ...formDataBlog, date })
+                                  }
+                                  minYear={1310}
+                                  maxYear={1410}
+                                  visibleCount={5}
+                                  indicatorBorderColor="green"
+                                />
+                              </PopoverContent>
+                            </Popover>
                           </div>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
@@ -2294,14 +2276,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 open={isEditBlogDialogOpen}
                 onOpenChange={setIsEditBlogDialogOpen}
               >
-                <DialogContent
-                  onPointerDownOutside={(e) => {
-                    if (datePickerRef.current?.contains(e.target as Node)) {
-                      e.preventDefault();
-                    }
-                  }}
-                  className="bg-white/95 backdrop-blur-sm border shadow-lg max-w-2xl"
-                >
+                <DialogContent className="bg-white/95 backdrop-blur-sm border shadow-lg max-w-2xl">
                   <DialogHeader>
                     <DialogTitle>ویرایش مقاله</DialogTitle>
                     <DialogDescription>
@@ -2382,22 +2357,28 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         تاریخ
                       </Label>
                       <div className="col-span-3">
-                        <Input
-                          readOnly
-                          value={formDataBlog.date}
-                          placeholder="انتخاب تاریخ"
-                          onClick={() =>
-                            setOpenDatePicker({
-                              type: "blogDate",
-                              value: formDataBlog.date,
-                              onChange: (date: string) => {
-                                setFormDataBlog({ ...formDataBlog, date });
-                                setOpenDatePicker(null);
-                              },
-                            })
-                          }
-                          className="col-span-3 cursor-pointer bg-white"
-                        />
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Input
+                              readOnly
+                              value={formDataBlog.date}
+                              placeholder="انتخاب تاریخ"
+                              className="col-span-3 cursor-pointer bg-white"
+                            />
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                            <WheelDatePicker
+                              value={formDataBlog.date}
+                              onChange={(date: string) =>
+                                setFormDataBlog({ ...formDataBlog, date })
+                              }
+                              minYear={1310}
+                              maxYear={1410}
+                              visibleCount={5}
+                              indicatorBorderColor="green"
+                            />
+                          </PopoverContent>
+                        </Popover>
                       </div>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
@@ -2450,44 +2431,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           </TabsContent>
         </Tabs>
 
-        {/* Date Picker Portal */}
-        {openDatePicker &&
-          typeof window !== "undefined" &&
-          createPortal(
-            <div
-              ref={datePickerRef}
-              style={{
-                position: "fixed",
-                left: 0,
-                right: 0,
-                bottom: 0,
-                zIndex: 9999,
-                background: "white",
-                boxShadow: "0 -2px 16px rgba(0,0,0,0.08)",
-                borderTop: "1px solid #e5e7eb",
-                padding: "16px 0",
-                display: "flex",
-                justifyContent: "center",
-              }}
-            >
-              <WheelDatePicker
-                value={openDatePicker.value}
-                onChange={openDatePicker.onChange}
-                minYear={1310}
-                maxYear={1410}
-                visibleCount={5}
-                indicatorBorderColor="green"
-              />
-              <Button
-                variant="outline"
-                className="ml-4"
-                onClick={() => setOpenDatePicker(null)}
-              >
-                بستن
-              </Button>
-            </div>,
-            document.body
-          )}
       </div>
     </div>
   );
