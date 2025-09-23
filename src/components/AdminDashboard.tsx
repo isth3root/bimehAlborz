@@ -9,13 +9,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { PersianDateInput } from "./PersianDateInput";
 import { PriceInput } from "./PriceInput";
 import { useBlogs } from '../hooks/useBlogs';
 import { motion } from 'framer-motion';
 import type { Blog } from '../data/blogsData';
-import { InputDatePicker } from 'jalaali-react-date-picker';
-import "jalaali-react-date-picker/lib/styles/index.css";
+import WheelDatePicker from '@buildix/wheel-datepicker';
 import moment from 'moment';
 import {
   Users,
@@ -545,23 +543,23 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="name" className="text-right">نام و نام خانوادگی</Label>
-                          <Input id="name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="col-span-3" />
+                          <Input id="name" name="name" autoComplete="name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="nationalCode" className="text-right">کد ملی</Label>
-                          <Input id="nationalCode" value={formData.nationalCode} onChange={(e) => setFormData({...formData, nationalCode: e.target.value})} className="col-span-3" />
+                          <Input id="nationalCode" name="nationalCode" value={formData.nationalCode} onChange={(e) => setFormData({...formData, nationalCode: e.target.value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="insuranceCode" className="text-right">کد بیمه (رمز عبور)</Label>
-                          <Input id="insuranceCode" type="password" value={formData.insuranceCode} onChange={(e) => setFormData({...formData, insuranceCode: e.target.value})} className="col-span-3" />
+                          <Input id="insuranceCode" name="insuranceCode" type="password" value={formData.insuranceCode} onChange={(e) => setFormData({...formData, insuranceCode: e.target.value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="phone" className="text-right">شماره تماس</Label>
-                          <Input id="phone" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="col-span-3" />
+                          <Input id="phone" name="phone" autoComplete="tel" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="email" className="text-right">ایمیل</Label>
-                          <Input id="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="col-span-3" />
+                          <Input id="email" name="email" autoComplete="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="col-span-3" />
                         </div>
                       </div>
                       <DialogFooter>
@@ -648,23 +646,23 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-name" className="text-right">نام و نام خانوادگی</Label>
-                      <Input id="edit-name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="col-span-3" />
+                      <Input id="edit-name" name="name" autoComplete="name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-nationalCode" className="text-right">کد ملی</Label>
-                      <Input id="edit-nationalCode" value={formData.nationalCode} onChange={(e) => setFormData({...formData, nationalCode: e.target.value})} className="col-span-3" />
+                      <Input id="edit-nationalCode" name="nationalCode" value={formData.nationalCode} onChange={(e) => setFormData({...formData, nationalCode: e.target.value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-insuranceCode" className="text-right">کد بیمه (رمز عبور)</Label>
-                      <Input id="edit-insuranceCode" type="password" value={formData.insuranceCode} onChange={(e) => setFormData({...formData, insuranceCode: e.target.value})} className="col-span-3" />
+                      <Input id="edit-insuranceCode" name="insuranceCode" type="password" value={formData.insuranceCode} onChange={(e) => setFormData({...formData, insuranceCode: e.target.value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-phone" className="text-right">شماره تماس</Label>
-                      <Input id="edit-phone" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="col-span-3" />
+                      <Input id="edit-phone" name="phone" autoComplete="tel" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-email" className="text-right">ایمیل</Label>
-                      <Input id="edit-email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="col-span-3" />
+                      <Input id="edit-email" name="email" autoComplete="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="col-span-3" />
                     </div>
                   </div>
                   <DialogFooter>
@@ -698,43 +696,39 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="policy-customerName" className="text-right">نام مشتری</Label>
-                          <Input id="policy-customerName" value={formDataPolicy.customerName} onChange={(e) => setFormDataPolicy({...formDataPolicy, customerName: e.target.value})} className="col-span-3" />
+                          <Input id="policy-customerName" name="customerName" autoComplete="name" value={formDataPolicy.customerName} onChange={(e) => setFormDataPolicy({...formDataPolicy, customerName: e.target.value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="policy-type" className="text-right">نوع بیمه</Label>
-                          <Input id="policy-type" value={formDataPolicy.type} onChange={(e) => setFormDataPolicy({...formDataPolicy, type: e.target.value})} className="col-span-3" />
+                          <Input id="policy-type" name="policy-type" value={formDataPolicy.type} onChange={(e) => setFormDataPolicy({...formDataPolicy, type: e.target.value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="policy-vehicle" className="text-right">موضوع بیمه</Label>
-                          <Input id="policy-vehicle" value={formDataPolicy.vehicle} onChange={(e) => setFormDataPolicy({...formDataPolicy, vehicle: e.target.value})} className="col-span-3" />
+                          <Input id="policy-vehicle" name="policy-vehicle" value={formDataPolicy.vehicle} onChange={(e) => setFormDataPolicy({...formDataPolicy, vehicle: e.target.value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="policy-startDate" className="text-right">تاریخ شروع</Label>
-                          <div className="col-span-3 relative z-50">
-                            <InputDatePicker
-                              value={formDataPolicy.startDate ? moment(formDataPolicy.startDate, 'jYYYY/jMM/jDD') : null}
-                              onChange={(moment) => setFormDataPolicy({ ...formDataPolicy, startDate: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
-                              className="w-full"
-                              
+                          <div className="col-span-3">
+                            <WheelDatePicker
+                              onChange={(date: Date) => setFormDataPolicy({ ...formDataPolicy, startDate: moment(date).format('jYYYY/jMM/jDD') })}
                             />
                           </div>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="policy-endDate" className="text-right">تاریخ انقضا</Label>
-                          <InputDatePicker
-                            value={formDataPolicy.endDate ? moment(formDataPolicy.endDate, 'jYYYY/jMM/jDD') : null}
-                            onChange={(moment) => setFormDataPolicy({ ...formDataPolicy, endDate: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
-                            className="col-span-3"
-                            
-                          />
+                          <div className="col-span-3">
+                            <WheelDatePicker
+                              onChange={(date: Date) => setFormDataPolicy({ ...formDataPolicy, endDate: moment(date).format('jYYYY/jMM/jDD') })}
+                            />
+                          </div>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
-                          <Label className="text-right">حق بیمه (ریال)</Label>
-                          <PriceInput value={formDataPolicy.premium} onChange={(value) => setFormDataPolicy({...formDataPolicy, premium: value})} className="col-span-3" />
+                          <Label htmlFor="policy-premium" className="text-right">حق بیمه (ریال)</Label>
+                          <PriceInput id="policy-premium" name="policy-premium" value={formDataPolicy.premium} onChange={(value) => setFormDataPolicy({...formDataPolicy, premium: value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="policy-pdf" className="text-right">فایل PDF</Label>
-                          <Input id="policy-pdf" type="file" accept=".pdf" onChange={(e) => setFormDataPolicy({...formDataPolicy, pdfFile: e.target.files ? e.target.files[0] : null})} className="col-span-3" />
+                          <Input id="policy-pdf" name="policy-pdf" type="file" accept=".pdf" onChange={(e) => setFormDataPolicy({...formDataPolicy, pdfFile: e.target.files ? e.target.files[0] : null})} className="col-span-3" />
                         </div>
                       </div>
                       <DialogFooter>
@@ -825,41 +819,39 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-policy-customerName" className="text-right">نام مشتری</Label>
-                      <Input id="edit-policy-customerName" value={formDataPolicy.customerName} onChange={(e) => setFormDataPolicy({...formDataPolicy, customerName: e.target.value})} className="col-span-3" />
+                      <Input id="edit-policy-customerName" name="customerName" autoComplete="name" value={formDataPolicy.customerName} onChange={(e) => setFormDataPolicy({...formDataPolicy, customerName: e.target.value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-policy-type" className="text-right">نوع بیمه</Label>
-                      <Input id="edit-policy-type" value={formDataPolicy.type} onChange={(e) => setFormDataPolicy({...formDataPolicy, type: e.target.value})} className="col-span-3" />
+                      <Input id="edit-policy-type" name="policy-type" value={formDataPolicy.type} onChange={(e) => setFormDataPolicy({...formDataPolicy, type: e.target.value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-policy-vehicle" className="text-right">موضوع بیمه</Label>
-                      <Input id="edit-policy-vehicle" value={formDataPolicy.vehicle} onChange={(e) => setFormDataPolicy({...formDataPolicy, vehicle: e.target.value})} className="col-span-3" />
+                      <Input id="edit-policy-vehicle" name="policy-vehicle" value={formDataPolicy.vehicle} onChange={(e) => setFormDataPolicy({...formDataPolicy, vehicle: e.target.value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-policy-startDate" className="text-right">تاریخ شروع</Label>
-                      <InputDatePicker
-                        value={formDataPolicy.startDate ? moment(formDataPolicy.startDate, 'jYYYY/jMM/jDD') : null}
-                        onChange={(moment) => setFormDataPolicy({ ...formDataPolicy, startDate: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
-                        className="col-span-3"
-                        
-                      />
+                      <div className="col-span-3">
+                        <WheelDatePicker
+                          onChange={(date: Date) => setFormDataPolicy({ ...formDataPolicy, startDate: moment(date).format('jYYYY/jMM/jDD') })}
+                        />
+                      </div>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-policy-endDate" className="text-right">تاریخ انقضا</Label>
-                      <InputDatePicker
-                        value={formDataPolicy.endDate ? moment(formDataPolicy.endDate, 'jYYYY/jMM/jDD') : null}
-                        onChange={(moment) => setFormDataPolicy({ ...formDataPolicy, endDate: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
-                        className="col-span-3"
-                        
-                      />
+                      <div className="col-span-3">
+                        <WheelDatePicker
+                          onChange={(date: Date) => setFormDataPolicy({ ...formDataPolicy, endDate: moment(date).format('jYYYY/jMM/jDD') })}
+                        />
+                      </div>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label className="text-right">حق بیمه (ریال)</Label>
-                      <PriceInput value={formDataPolicy.premium} onChange={(value) => setFormDataPolicy({...formDataPolicy, premium: value})} className="col-span-3" />
+                      <Label htmlFor="edit-policy-premium" className="text-right">حق بیمه (ریال)</Label>
+                      <PriceInput id="edit-policy-premium" name="policy-premium" value={formDataPolicy.premium} onChange={(value) => setFormDataPolicy({...formDataPolicy, premium: value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-policy-pdf" className="text-right">فایل PDF</Label>
-                      <Input id="edit-policy-pdf" type="file" accept=".pdf" onChange={(e) => setFormDataPolicy({...formDataPolicy, pdfFile: e.target.files ? e.target.files[0] : null})} className="col-span-3" />
+                      <Input id="edit-policy-pdf" name="policy-pdf" type="file" accept=".pdf" onChange={(e) => setFormDataPolicy({...formDataPolicy, pdfFile: e.target.files ? e.target.files[0] : null})} className="col-span-3" />
                     </div>
                   </div>
                   <DialogFooter>
@@ -893,28 +885,27 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="installment-customerName" className="text-right">نام مشتری</Label>
-                          <Input id="installment-customerName" value={formDataInstallment.customerName} onChange={(e) => setFormDataInstallment({...formDataInstallment, customerName: e.target.value})} className="col-span-3" />
+                          <Input id="installment-customerName" name="customerName" autoComplete="name" value={formDataInstallment.customerName} onChange={(e) => setFormDataInstallment({...formDataInstallment, customerName: e.target.value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="installment-policyType" className="text-right">نوع بیمه</Label>
-                          <Input id="installment-policyType" value={formDataInstallment.policyType} onChange={(e) => setFormDataInstallment({...formDataInstallment, policyType: e.target.value})} className="col-span-3" />
+                          <Input id="installment-policyType" name="policyType" value={formDataInstallment.policyType} onChange={(e) => setFormDataInstallment({...formDataInstallment, policyType: e.target.value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
-                          <Label className="text-right">مبلغ قسط (ریال)</Label>
-                          <PriceInput value={formDataInstallment.amount} onChange={(value) => setFormDataInstallment({...formDataInstallment, amount: value})} className="col-span-3" />
+                          <Label htmlFor="installment-amount" className="text-right">مبلغ قسط (ریال)</Label>
+                          <PriceInput id="installment-amount" name="installment-amount" value={formDataInstallment.amount} onChange={(value) => setFormDataInstallment({...formDataInstallment, amount: value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="installment-dueDate" className="text-right">سررسید</Label>
-                          <InputDatePicker
-                            value={formDataInstallment.dueDate ? moment(formDataInstallment.dueDate, 'jYYYY/jMM/jDD') : null}
-                            onChange={(moment) => setFormDataInstallment({ ...formDataInstallment, dueDate: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
-                            className="col-span-3"
-                            
-                          />
+                          <div className="col-span-3">
+                            <WheelDatePicker
+                              onChange={(date: Date) => setFormDataInstallment({ ...formDataInstallment, dueDate: moment(date).format('jYYYY/jMM/jDD') })}
+                            />
+                          </div>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="installment-status" className="text-right">وضعیت</Label>
-                          <Select value={formDataInstallment.status} onValueChange={(value: string) => setFormDataInstallment({...formDataInstallment, status: value})}>
+                          <Select name="status" value={formDataInstallment.status} onValueChange={(value: string) => setFormDataInstallment({...formDataInstallment, status: value})}>
                             <SelectTrigger className="col-span-3">
                               <SelectValue />
                             </SelectTrigger>
@@ -926,7 +917,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="installment-payLink" className="text-right">لینک پرداخت</Label>
-                          <Input id="installment-payLink" value={formDataInstallment.payLink} onChange={(e) => setFormDataInstallment({...formDataInstallment, payLink: e.target.value})} className="col-span-3" />
+                          <Input id="installment-payLink" name="payLink" value={formDataInstallment.payLink} onChange={(e) => setFormDataInstallment({...formDataInstallment, payLink: e.target.value})} className="col-span-3" />
                         </div>
                       </div>
                       <DialogFooter>
@@ -1019,28 +1010,27 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-installment-customerName" className="text-right">نام مشتری</Label>
-                      <Input id="edit-installment-customerName" value={formDataInstallment.customerName} onChange={(e) => setFormDataInstallment({...formDataInstallment, customerName: e.target.value})} className="col-span-3" />
+                      <Input id="edit-installment-customerName" name="customerName" autoComplete="name" value={formDataInstallment.customerName} onChange={(e) => setFormDataInstallment({...formDataInstallment, customerName: e.target.value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-installment-policyType" className="text-right">نوع بیمه</Label>
-                      <Input id="edit-installment-policyType" value={formDataInstallment.policyType} onChange={(e) => setFormDataInstallment({...formDataInstallment, policyType: e.target.value})} className="col-span-3" />
+                      <Input id="edit-installment-policyType" name="policyType" value={formDataInstallment.policyType} onChange={(e) => setFormDataInstallment({...formDataInstallment, policyType: e.target.value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label className="text-right">مبلغ قسط (ریال)</Label>
-                      <PriceInput value={formDataInstallment.amount} onChange={(value) => setFormDataInstallment({...formDataInstallment, amount: value})} className="col-span-3" />
+                      <Label htmlFor="edit-installment-amount" className="text-right">مبلغ قسط (ریال)</Label>
+                      <PriceInput id="edit-installment-amount" name="installment-amount" value={formDataInstallment.amount} onChange={(value) => setFormDataInstallment({...formDataInstallment, amount: value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-installment-dueDate" className="text-right">سررسید</Label>
-                      <InputDatePicker
-                        value={formDataInstallment.dueDate ? moment(formDataInstallment.dueDate, 'jYYYY/jMM/jDD') : null}
-                        onChange={(moment) => setFormDataInstallment({ ...formDataInstallment, dueDate: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
-                        className="col-span-3"
-                        
-                      />
+                      <div className="col-span-3">
+                        <WheelDatePicker
+                          onChange={(date: Date) => setFormDataInstallment({ ...formDataInstallment, dueDate: moment(date).format('jYYYY/jMM/jDD') })}
+                        />
+                      </div>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-installment-status" className="text-right">وضعیت</Label>
-                      <Select value={formDataInstallment.status} onValueChange={(value: string) => setFormDataInstallment({...formDataInstallment, status: value})}>
+                      <Select name="status" value={formDataInstallment.status} onValueChange={(value: string) => setFormDataInstallment({...formDataInstallment, status: value})}>
                         <SelectTrigger className="col-span-3">
                           <SelectValue />
                         </SelectTrigger>
@@ -1052,7 +1042,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-installment-payLink" className="text-right">لینک پرداخت</Label>
-                      <Input id="edit-installment-payLink" value={formDataInstallment.payLink} onChange={(e) => setFormDataInstallment({...formDataInstallment, payLink: e.target.value})} className="col-span-3" />
+                      <Input id="edit-installment-payLink" name="payLink" value={formDataInstallment.payLink} onChange={(e) => setFormDataInstallment({...formDataInstallment, payLink: e.target.value})} className="col-span-3" />
                     </div>
                   </div>
                   <DialogFooter>
@@ -1086,36 +1076,35 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       <div className="grid gap-4 py-4 max-h-96 overflow-y-auto">
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="blog-title" className="text-right">عنوان</Label>
-                          <Input id="blog-title" value={formDataBlog.title} onChange={(e) => setFormDataBlog({...formDataBlog, title: e.target.value})} className="col-span-3" />
+                          <Input id="blog-title" name="blog-title" value={formDataBlog.title} onChange={(e) => setFormDataBlog({...formDataBlog, title: e.target.value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="blog-excerpt" className="text-right">خلاصه</Label>
-                          <Input id="blog-excerpt" value={formDataBlog.excerpt} onChange={(e) => setFormDataBlog({...formDataBlog, excerpt: e.target.value})} className="col-span-3" />
+                          <Input id="blog-excerpt" name="blog-excerpt" value={formDataBlog.excerpt} onChange={(e) => setFormDataBlog({...formDataBlog, excerpt: e.target.value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="blog-content" className="text-right">محتوا</Label>
-                          <textarea id="blog-content" value={formDataBlog.content} onChange={(e) => setFormDataBlog({...formDataBlog, content: e.target.value})} className="col-span-3 border rounded-md p-2 min-h-24" />
+                          <textarea id="blog-content" name="blog-content" value={formDataBlog.content} onChange={(e) => setFormDataBlog({...formDataBlog, content: e.target.value})} className="col-span-3 border rounded-md p-2 min-h-24" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="blog-author" className="text-right">نویسنده</Label>
-                          <Input id="blog-author" value={formDataBlog.author} onChange={(e) => setFormDataBlog({...formDataBlog, author: e.target.value})} className="col-span-3" />
+                          <Input id="blog-author" name="blog-author" value={formDataBlog.author} onChange={(e) => setFormDataBlog({...formDataBlog, author: e.target.value})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="blog-date" className="text-right">تاریخ</Label>
-                          <InputDatePicker
-                            value={formDataBlog.date ? moment(formDataBlog.date, 'jYYYY/jMM/jDD') : null}
-                            onChange={(moment) => setFormDataBlog({ ...formDataBlog, date: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
-                            className="col-span-3"
-                            
-                          />
+                          <div className="col-span-3">
+                            <WheelDatePicker
+                              onChange={(date: Date) => setFormDataBlog({ ...formDataBlog, date: moment(date).format('jYYYY/jMM/jDD') })}
+                            />
+                          </div>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="blog-image" className="text-right">تصویر</Label>
-                          <Input id="blog-image" type="file" accept="image/*" onChange={(e) => setFormDataBlog({...formDataBlog, imageUrl: e.target.files ? e.target.files[0].name : ''})} className="col-span-3" />
+                          <Input id="blog-image" name="blog-image" type="file" accept="image/*" onChange={(e) => setFormDataBlog({...formDataBlog, imageUrl: e.target.files ? e.target.files[0].name : ''})} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="blog-category" className="text-right">دسته‌بندی</Label>
-                          <Input id="blog-category" value={formDataBlog.category} onChange={(e) => setFormDataBlog({...formDataBlog, category: e.target.value})} className="col-span-3" />
+                          <Input id="blog-category" name="blog-category" value={formDataBlog.category} onChange={(e) => setFormDataBlog({...formDataBlog, category: e.target.value})} className="col-span-3" />
                         </div>
                       </div>
                       <DialogFooter>
@@ -1198,36 +1187,35 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   <div className="grid gap-4 py-4 max-h-96 overflow-y-auto">
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-blog-title" className="text-right">عنوان</Label>
-                      <Input id="edit-blog-title" value={formDataBlog.title} onChange={(e) => setFormDataBlog({...formDataBlog, title: e.target.value})} className="col-span-3" />
+                      <Input id="edit-blog-title" name="blog-title" value={formDataBlog.title} onChange={(e) => setFormDataBlog({...formDataBlog, title: e.target.value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-blog-excerpt" className="text-right">خلاصه</Label>
-                      <Input id="edit-blog-excerpt" value={formDataBlog.excerpt} onChange={(e) => setFormDataBlog({...formDataBlog, excerpt: e.target.value})} className="col-span-3" />
+                      <Input id="edit-blog-excerpt" name="blog-excerpt" value={formDataBlog.excerpt} onChange={(e) => setFormDataBlog({...formDataBlog, excerpt: e.target.value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-blog-content" className="text-right">محتوا</Label>
-                      <textarea id="edit-blog-content" value={formDataBlog.content} onChange={(e) => setFormDataBlog({...formDataBlog, content: e.target.value})} className="col-span-3 border rounded-md p-2 min-h-24" />
+                      <textarea id="edit-blog-content" name="blog-content" value={formDataBlog.content} onChange={(e) => setFormDataBlog({...formDataBlog, content: e.target.value})} className="col-span-3 border rounded-md p-2 min-h-24" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-blog-author" className="text-right">نویسنده</Label>
-                      <Input id="edit-blog-author" value={formDataBlog.author} onChange={(e) => setFormDataBlog({...formDataBlog, author: e.target.value})} className="col-span-3" />
+                      <Input id="edit-blog-author" name="blog-author" value={formDataBlog.author} onChange={(e) => setFormDataBlog({...formDataBlog, author: e.target.value})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-blog-date" className="text-right">تاریخ</Label>
-                      <InputDatePicker
-                        value={formDataBlog.date ? moment(formDataBlog.date, 'jYYYY/jMM/jDD') : null}
-                        onChange={(moment) => setFormDataBlog({ ...formDataBlog, date: moment ? moment.format('jYYYY/jMM/jDD') : '' })}
-                        className="col-span-3"
-                        
-                      />
+                      <div className="col-span-3">
+                        <WheelDatePicker
+                          onChange={(date: Date) => setFormDataBlog({ ...formDataBlog, date: moment(date).format('jYYYY/jMM/jDD') })}
+                        />
+                      </div>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-blog-image" className="text-right">تصویر</Label>
-                      <Input id="edit-blog-image" type="file" accept="image/*" onChange={(e) => setFormDataBlog({...formDataBlog, imageUrl: e.target.files ? e.target.files[0].name : formDataBlog.imageUrl})} className="col-span-3" />
+                      <Input id="edit-blog-image" name="blog-image" type="file" accept="image/*" onChange={(e) => setFormDataBlog({...formDataBlog, imageUrl: e.target.files ? e.target.files[0].name : formDataBlog.imageUrl})} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="edit-blog-category" className="text-right">دسته‌بندی</Label>
-                      <Input id="edit-blog-category" value={formDataBlog.category} onChange={(e) => setFormDataBlog({...formDataBlog, category: e.target.value})} className="col-span-3" />
+                      <Input id="edit-blog-category" name="blog-category" value={formDataBlog.category} onChange={(e) => setFormDataBlog({...formDataBlog, category: e.target.value})} className="col-span-3" />
                     </div>
                   </div>
                   <DialogFooter>
