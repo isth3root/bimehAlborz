@@ -1,7 +1,5 @@
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 import { Separator } from "./ui/separator";
-import { Phone, MapPin, Instagram, Twitter, Linkedin } from "lucide-react";
+import { Phone, MapPin } from "lucide-react";
 
 export function Footer() {
   return (
@@ -12,8 +10,8 @@ export function Footer() {
           {/* Company info */}
           <div>
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">A</span>
+              <div className="w-12 h-12 rounded-lg flex items-center justify-center">
+                <img src="./logo.png" alt="Logo" className="w-12 h-12 rounded-lg object-cover" />
               </div>
               <div>
                 <h3 className="text-xl">بیمه البرز</h3>
@@ -23,18 +21,6 @@ export function Footer() {
             <p className="text-gray-400 leading-relaxed mb-6">
               بیش از ۲۰ سال تجربه در ارائه خدمات بیمه‌ای با بالاترین کیفیت و اعتماد مشتریان
             </p>
-            <div className="flex gap-3">
-              <Button variant="ghost" size="sm" className="p-2 text-gray-400 hover:text-green-400">
-                <Instagram className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="sm" className="p-2 text-gray-400 hover:text-green-400">
-                <Twitter className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="sm" className="p-2 text-gray-400 hover:text-green-400">
-                <Linkedin className="h-5 w-5" />
-              </Button>
-              
-            </div>
           </div>
 
           {/* Quick links */}
@@ -46,7 +32,6 @@ export function Footer() {
               <li><a href="#" className="text-gray-400 hover:text-green-400 transition-colors">بیمه آتش‌سوزی</a></li>
               <li><a href="#" className="text-gray-400 hover:text-green-400 transition-colors">بیمه مسئولیت مدنی</a></li>
               <li><a href="#" className="text-gray-400 hover:text-green-400 transition-colors">بیمه منزل</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-green-400 transition-colors">بیمه تجاری</a></li>
             </ul>
           </div>
 
@@ -65,20 +50,20 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Newsletter */}
-          <div>
-            <h4 className="text-lg mb-6">خبرنامه</h4>
-            <p className="text-gray-400 mb-4">
-              از آخرین اخبار و تخفیف‌های ویژه باخبر شوید
-            </p>
-            <div className="space-y-3">
-              <Input 
-                placeholder="ایمیل شما"
-                className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
-              />
-              <Button className="w-full bg-green-600 hover:bg-green-700">
-                عضویت در خبرنامه
-              </Button>
+          {/* Map */}
+          <div className="flex flex-col">
+            <p>موقعیت ما روی نقشه</p>
+            <div className="mt-4">
+              <iframe
+                src="https://maps.google.com/maps?q=35.7298524496717,51.377519966423876&output=embed"
+                width="100%"
+                height="150"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="rounded"
+              ></iframe>
             </div>
           </div>
         </div>

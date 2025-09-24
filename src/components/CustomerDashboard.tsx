@@ -1,14 +1,16 @@
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
-import { 
-  Car, 
-  Shield, 
-  Flame, 
-  User, 
-  Calendar, 
-  CreditCard, 
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
+import {
+  Car,
+  Shield,
+  Flame,
+  User,
+  Calendar,
+  CreditCard,
   Download,
   FileText,
   Phone,
@@ -20,6 +22,9 @@ interface CustomerDashboardProps {
 }
 
 export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
+  const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const insurancePolicies = [
     {
       id: '12345',
@@ -31,7 +36,8 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
       status: 'فعال',
       icon: Car,
       color: 'text-blue-600',
-      bgColor: 'bg-blue-50'
+      bgColor: 'bg-blue-50',
+      isInstallment: true
     },
     {
       id: '12346',
@@ -43,7 +49,8 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
       status: 'فعال',
       icon: Shield,
       color: 'text-green-600',
-      bgColor: 'bg-green-50'
+      bgColor: 'bg-green-50',
+      isInstallment: true
     },
     {
       id: '12347',
@@ -55,7 +62,8 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
       status: 'نزدیک انقضا',
       icon: Flame,
       color: 'text-red-600',
-      bgColor: 'bg-red-50'
+      bgColor: 'bg-red-50',
+      isInstallment: false
     }
   ];
 
@@ -141,10 +149,12 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
             </div>
             
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm">
-                <Phone className="h-4 w-4 ml-2" />
-                پشتیبانی
-              </Button>
+              <a href="tel:+989385540717">
+                <Button variant="ghost" size="sm">
+                  <Phone className="h-4 w-4 ml-2" />
+                  پشتیبانی
+                </Button>
+              </a>
               <Button variant="ghost" size="sm" onClick={onLogout}>
                 <LogOut className="h-4 w-4 ml-2" />
                 خروج
@@ -204,7 +214,7 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">امتیاز بیمه‌گذار</p>
-                  <p className="text-2xl text-green-600">A+</p>
+                  <p className="text-2xl text-green-600">A</p>
                 </div>
                 <User className="h-8 w-8 text-green-600" />
               </div>
@@ -252,19 +262,21 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                         </div>
                         {policy.plateNumber && (
                           <div className="flex justify-between">
-                            <span className="text-gray-600">شماره پلاک:</span>
+                            <span className="text-gray-600">{['شخص ثالث', 'بدنه خودرو'].includes(policy.type) ? 'شماره پلاک:' : 'آدرس:'}</span>
                             <span>{policy.plateNumber}</span>
                           </div>
                         )}
                       </div>
                       <div className="mt-4 flex gap-2">
-                        <Button size="sm" variant="outline" className="flex-1">
+                        <Button size="sm" variant="outline" className={policy.isInstallment ? "flex-1" : "w-full"}>
                           <Download className="h-4 w-4 ml-2" />
-                          دانلود
+                          دانلود بیمه نامه
                         </Button>
-                        <Button size="sm" className="flex-1">
-                          جزئیات
-                        </Button>
+                        {policy.isInstallment && (
+                          <Button size="sm" className="flex-1" onClick={() => { setSelectedPolicy(policy); setIsModalOpen(true); }}>
+                            اقساط
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -276,52 +288,83 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
 
         {/* Installments Table */}
         <Card>
-          <CardHeader>
-            <CardTitle>اقساط</CardTitle>
-            <CardDescription>
-              جدول اقساط پرداختی و آینده
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>نوع بیمه</TableHead>
-                  <TableHead>شماره قسط</TableHead>
-                  <TableHead>مبلغ (ریال)</TableHead>
-                  <TableHead>سررسید</TableHead>
-                  <TableHead>تاریخ پرداخت</TableHead>
-                  <TableHead>وضعیت</TableHead>
-                  <TableHead>عملیات</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {installments.map((installment, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{installment.policyType}</TableCell>
-                    <TableCell>{installment.installmentNumber}</TableCell>
-                    <TableCell>{installment.amount}</TableCell>
-                    <TableCell>{installment.dueDate}</TableCell>
-                    <TableCell>{installment.paymentDate}</TableCell>
-                    <TableCell>{getPaymentStatusBadge(installment.status)}</TableCell>
-                    <TableCell>
-                      {installment.status === 'معوق' && (
-                        <Button size="sm" className="bg-red-600 hover:bg-red-700">
-                          پرداخت
-                        </Button>
-                      )}
-                      {installment.status === 'پرداخت شده' && (
-                        <Button size="sm" variant="outline">
-                          رسید
-                        </Button>
-                      )}
-                    </TableCell>
+           <CardHeader>
+             <CardTitle>اقساط</CardTitle>
+             <CardDescription>
+               جدول اقساط معوق و آینده
+             </CardDescription>
+           </CardHeader>
+           <CardContent>
+             <Table>
+               <TableHeader>
+                 <TableRow>
+                   <TableHead className="text-right">نوع بیمه</TableHead>
+                   <TableHead className="text-right">شماره قسط</TableHead>
+                   <TableHead className="text-right">مبلغ (ریال)</TableHead>
+                   <TableHead className="text-right">سررسید</TableHead>
+                   <TableHead className="text-right">وضعیت</TableHead>
+                   <TableHead className="text-right">عملیات</TableHead>
+                 </TableRow>
+               </TableHeader>
+               <TableBody>
+                 {installments.filter(installment => installment.status !== 'پرداخت شده').map((installment, index) => (
+                   <TableRow key={index}>
+                     <TableCell>{installment.policyType}</TableCell>
+                     <TableCell>{installment.installmentNumber}</TableCell>
+                     <TableCell>{installment.amount}</TableCell>
+                     <TableCell>{installment.dueDate}</TableCell>
+                     <TableCell>{getPaymentStatusBadge(installment.status)}</TableCell>
+                     <TableCell>
+                       {(installment.status === 'معوق' || installment.status === 'آینده') && (
+                         <Button size="sm" className="bg-red-600 hover:bg-red-700">
+                           پرداخت
+                         </Button>
+                       )}
+                     </TableCell>
+                   </TableRow>
+                 ))}
+               </TableBody>
+             </Table>
+           </CardContent>
+         </Card>
+
+        {/* Installments Modal */}
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>اقساط بیمه‌نامه {selectedPolicy?.type}</DialogTitle>
+              <DialogDescription>
+                لیست اقساط معوق و آینده برای بیمه‌نامه شماره {selectedPolicy?.id}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-right">نوع بیمه</TableHead>
+                    <TableHead className="text-right">شماره قسط</TableHead>
+                    <TableHead className="text-right">مبلغ (ریال)</TableHead>
+                    <TableHead className="text-right">سررسید</TableHead>
+                    <TableHead className="text-right">وضعیت</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                </TableHeader>
+                <TableBody>
+                  {installments
+                    .filter(installment => installment.policyId === selectedPolicy?.id)
+                    .map((installment, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{installment.policyType}</TableCell>
+                        <TableCell>{installment.installmentNumber}</TableCell>
+                        <TableCell>{installment.amount}</TableCell>
+                        <TableCell>{installment.dueDate}</TableCell>
+                        <TableCell>{getPaymentStatusBadge(installment.status)}</TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

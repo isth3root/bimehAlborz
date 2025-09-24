@@ -109,8 +109,16 @@ export function ContactUs() {
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-8">موقعیت ما روی نقشه</h2>
-          <div className="bg-gray-200 h-96 rounded-lg flex items-center justify-center">
-            <p className="text-gray-500">نقشه اینجا قرار می‌گیرد</p>
+          <div className="h-96 rounded-lg overflow-hidden">
+            <iframe
+              src="https://maps.google.com/maps?q=35.7298524496717,51.377519966423876&output=embed"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            ></iframe>
           </div>
         </div>
       </section>

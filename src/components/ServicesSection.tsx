@@ -48,14 +48,6 @@ export function ServicesSection({ onNavigate }: ServicesSectionProps) {
       features: ["ساختمان", "اموال منقول", "مسئولیت مدنی"],
       color: "text-orange-600"
     },
-    {
-      id: 6,
-      title: "بیمه تجاری",
-      description: "راه‌حل‌های بیمه‌ای برای کسب و کارها",
-      icon: Briefcase,
-      features: ["بیمه کارخانه", "بیمه کارکنان", "تجهیزات"],
-      color: "text-indigo-600"
-    }
   ];
 
   return (
