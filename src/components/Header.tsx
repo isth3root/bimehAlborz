@@ -32,7 +32,9 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between flex-row-reverse">
           <div className="flex items-center gap-3">
-            <img src="./logo.png" alt="Logo" className="w-12 h-12 rounded-lg object-cover" />
+            <div className="w-12 h-12 rounded-lg flex items-center justify-center">
+              <img src="./logo.png" alt="Logo" className="w-12 h-12 rounded-lg object-cover" />
+            </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900">بیمه البرز</h1>
               <p className="text-sm text-gray-600">همراه شما در همه مراحل زندگی</p>

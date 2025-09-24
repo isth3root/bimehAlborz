@@ -61,35 +61,19 @@ export function ContactUs() {
                     پیام خود را برای ما ارسال کنید، در اولین فرصت پاسخ خواهیم داد
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="firstName">نام</Label>
-                      <Input id="firstName" placeholder="نام خود را وارد کنید" />
-                    </div>
-                    <div>
-                      <Label htmlFor="lastName">نام خانوادگی</Label>
-                      <Input id="lastName" placeholder="نام خانوادگی خود را وارد کنید" />
-                    </div>
+                <CardContent className="space-y-6">
+                  <div>
+                    <Label htmlFor="name" className="mb-2 block">نام و نام خانوادگی</Label>
+                    <Input id="name" placeholder="نام و نام خانوادگی خود را وارد کنید" />
                   </div>
 
                   <div>
-                    <Label htmlFor="email">ایمیل</Label>
-                    <Input id="email" type="email" placeholder="ایمیل خود را وارد کنید" />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="phone">شماره تماس</Label>
+                    <Label htmlFor="phone" className="mb-2 block">شماره تماس</Label>
                     <Input id="phone" placeholder="شماره تماس خود را وارد کنید" />
                   </div>
 
                   <div>
-                    <Label htmlFor="subject">موضوع</Label>
-                    <Input id="subject" placeholder="موضوع پیام خود را وارد کنید" />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="message">پیام</Label>
+                    <Label htmlFor="message" className="mb-2 block">پیام</Label>
                     <Textarea
                       id="message"
                       placeholder="پیام خود را بنویسید..."

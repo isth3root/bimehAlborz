@@ -164,7 +164,7 @@ function AppContent() {
 
 export default function App() {
   return (
-    <BrowserRouter basename="bimehAlborz">
+    <BrowserRouter basename="/bimehAlborz/">
       <AppContent />
     </BrowserRouter>
   );

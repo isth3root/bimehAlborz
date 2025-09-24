@@ -24,14 +24,7 @@ import {
   AlertDialogTrigger,
 } from "./ui/alert-dialog";
 import { Label } from "./ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "./ui/dialog";
+
 import {
   Select,
   SelectContent,
@@ -58,17 +51,19 @@ import {
 } from "lucide-react";
 import { DatePicker } from "zaman";
 import moment from "moment-jalaali";
-import ReactDOM from "react-dom";
+
 
 // Client-only Persian date picker component using zaman
 const ClientOnlyDatePicker = ({
   value,
   onChange,
   placeholder,
+  id,
 }: {
   value: string;
   onChange: (date: string) => void;
   placeholder: string;
+  id?: string;
 }) => {
   const [isClient, setIsClient] = useState(false);
 
@@ -95,7 +90,7 @@ const ClientOnlyDatePicker = ({
 
   if (!isClient) {
     return (
-      <div className="flex items-center gap-2 border rounded-md px-3 py-2 text-sm bg-white">
+      <div id={id} className="flex items-center gap-2 border rounded-md px-3 py-2 text-sm bg-white">
         <Calendar className="h-4 w-4 text-gray-400" />
         <span>{placeholder}</span>
       </div>
@@ -103,16 +98,18 @@ const ClientOnlyDatePicker = ({
   }
 
   return (
-    <DatePicker
-      defaultValue={parsePersianDate(value)}
-      onChange={handleDateChange}
-      className="w-full"
-      inputClass="flex items-center gap-2 border rounded-md px-3 py-2 text-sm bg-white cursor-pointer"
-      inputAttributes={{
-        placeholder: placeholder,
-        style: { direction: "rtl" },
-      }}
-    />
+    <div id={id}>
+      <DatePicker
+        defaultValue={parsePersianDate(value)}
+        onChange={handleDateChange}
+        className="w-full"
+        inputClass="flex items-center gap-2 border rounded-md px-3 py-2 text-sm bg-white cursor-pointer"
+        inputAttributes={{
+          placeholder: placeholder,
+          style: { direction: "rtl" },
+        }}
+      />
+    </div>
   );
 };
 
@@ -269,6 +266,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [editingPolicy, setEditingPolicy] = useState<Policy | null>(null);
   const [formDataPolicy, setFormDataPolicy] = useState({
     customerName: "",
+    customerNationalCode: "",
     type: "",
     vehicle: "",
     startDate: "",
@@ -280,12 +278,11 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [deletePolicy, setDeletePolicy] = useState<Policy | null>(null);
   const [showAddPolicyForm, setShowAddPolicyForm] = useState(false);
 
-  const [isEditInstallmentDialogOpen, setIsEditInstallmentDialogOpen] =
-    useState(false);
   const [editingInstallment, setEditingInstallment] =
     useState<Installment | null>(null);
   const [formDataInstallment, setFormDataInstallment] = useState({
     customerName: "",
+    customerNationalCode: "",
     policyType: "",
     amount: "",
     dueDate: "",
@@ -301,7 +298,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const [blogSearchQuery, setBlogSearchQuery] = useState("");
-  const [isEditBlogDialogOpen, setIsEditBlogDialogOpen] = useState(false);
   const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
   const [formDataBlog, setFormDataBlog] = useState({
     title: "",
@@ -414,6 +410,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     setPolicies([...policies, newPolicy]);
     setFormDataPolicy({
       customerName: "",
+      customerNationalCode: "",
       type: "",
       vehicle: "",
       startDate: "",
@@ -434,6 +431,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     );
     setFormDataPolicy({
       customerName: "",
+      customerNationalCode: "",
       type: "",
       vehicle: "",
       startDate: "",
@@ -456,6 +454,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     setEditingPolicy(policy);
     setFormDataPolicy({
       customerName: policy.customerName,
+      customerNationalCode: "",
       type: policy.type,
       vehicle: policy.vehicle,
       startDate: policy.startDate,
@@ -481,6 +480,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     setInstallments([...installments, newInstallment]);
     setFormDataInstallment({
       customerName: "",
+      customerNationalCode: "",
       policyType: "",
       amount: "",
       dueDate: "",
@@ -499,6 +499,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     );
     setFormDataInstallment({
       customerName: "",
+      customerNationalCode: "",
       policyType: "",
       amount: "",
       dueDate: "",
@@ -519,6 +520,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     setEditingInstallment(installment);
     setFormDataInstallment({
       customerName: installment.customerName,
+      customerNationalCode: "",
       policyType: installment.policyType,
       amount: installment.amount,
       dueDate: installment.dueDate,
@@ -667,8 +669,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">A</span>
+              <div className="w-12 h-10 rounded-lg flex items-center justify-center">
+                <img src="./logo.png" alt="Logo" className="w-12 h-12 rounded-lg object-cover" />
               </div>
               <div>
                 <h1 className="text-lg">پنل مدیریت</h1>
@@ -902,21 +904,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           className="col-span-3"
                         />
                       </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="email" className="text-right">
-                          ایمیل
-                        </Label>
-                        <Input
-                          id="email"
-                          name="email"
-                          autoComplete="email"
-                          value={formData.email}
-                          onChange={(e) =>
-                            setFormData({ ...formData, email: e.target.value })
-                          }
-                          className="col-span-3"
-                        />
-                      </div>
+                      
                     </div>
                     <div className="flex gap-2 mt-4 justify-end">
                       <Button onClick={editingCustomer ? handleEditCustomer : handleAddCustomer}>
@@ -1059,26 +1047,47 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       </h3>
                     <div className="grid gap-4 py-2">
                       <div className="grid grid-cols-4 items-center gap-4">
-                        <Label
-                          htmlFor="policy-customerName"
-                          className="text-right"
-                        >
-                          نام مشتری
-                        </Label>
-                        <Input
-                          id="policy-customerName"
-                          name="customerName"
-                          autoComplete="name"
-                          value={formDataPolicy.customerName}
-                          onChange={(e) =>
-                            setFormDataPolicy({
-                              ...formDataPolicy,
-                              customerName: e.target.value,
-                            })
-                          }
-                          className="col-span-3"
-                        />
-                      </div>
+                         <Label
+                           htmlFor="policy-customerName"
+                           className="text-right"
+                         >
+                           نام مشتری
+                         </Label>
+                         <Input
+                           id="policy-customerName"
+                           name="customerName"
+                           autoComplete="name"
+                           value={formDataPolicy.customerName}
+                           onChange={(e) =>
+                             setFormDataPolicy({
+                               ...formDataPolicy,
+                               customerName: e.target.value,
+                             })
+                           }
+                           className="col-span-3"
+                         />
+                       </div>
+                       <div className="grid grid-cols-4 items-center gap-4">
+                         <Label
+                           htmlFor="policy-customerNationalCode"
+                           className="text-right"
+                         >
+                           کد ملی مشتری
+                         </Label>
+                         <Input
+                           id="policy-customerNationalCode"
+                           name="customerNationalCode"
+                           autoComplete="off"
+                           value={formDataPolicy.customerNationalCode}
+                           onChange={(e) =>
+                             setFormDataPolicy({
+                               ...formDataPolicy,
+                               customerNationalCode: e.target.value,
+                             })
+                           }
+                           className="col-span-3"
+                         />
+                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="policy-type" className="text-right">
                           نوع بیمه
@@ -1086,6 +1095,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         <Input
                           id="policy-type"
                           name="policy-type"
+                          autoComplete="off"
                           value={formDataPolicy.type}
                           onChange={(e) =>
                             setFormDataPolicy({
@@ -1122,6 +1132,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         </Label>
                         <div className="col-span-3">
                           <ClientOnlyDatePicker
+                            id="policy-startDate"
                             value={formDataPolicy.startDate}
                             onChange={(date: string) => {
                               setFormDataPolicy({
@@ -1139,6 +1150,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         </Label>
                         <div className="col-span-3">
                           <ClientOnlyDatePicker
+                            id="policy-endDate"
                             value={formDataPolicy.endDate}
                             onChange={(date: string) => {
                               setFormDataPolicy({
@@ -1196,6 +1208,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                             setEditingPolicy(null);
                             setFormDataPolicy({
                               customerName: "",
+                              customerNationalCode: "",
                               type: "",
                               vehicle: "",
                               startDate: "",
@@ -1358,6 +1371,27 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label
+                          htmlFor="installment-customerNationalCode"
+                          className="text-right"
+                        >
+                          کد ملی مشتری
+                        </Label>
+                        <Input
+                          id="installment-customerNationalCode"
+                          name="customerNationalCode"
+                          autoComplete="off"
+                          value={formDataInstallment.customerNationalCode}
+                          onChange={(e) =>
+                            setFormDataInstallment({
+                              ...formDataInstallment,
+                              customerNationalCode: e.target.value,
+                            })
+                          }
+                          className="col-span-3"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label
                           htmlFor="installment-policyType"
                           className="text-right"
                         >
@@ -1403,6 +1437,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         </Label>
                         <div className="col-span-3">
                           <ClientOnlyDatePicker
+                            id="installment-dueDate"
                             value={formDataInstallment.dueDate}
                             onChange={(date: string) => {
                               setFormDataInstallment({
@@ -1436,6 +1471,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="معوق">معوق</SelectItem>
+                            <SelectItem value="آینده">آینده</SelectItem>
                             <SelectItem value="پرداخت شده">
                               پرداخت شده
                             </SelectItem>
@@ -1473,6 +1509,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                             setEditingInstallment(null);
                             setFormDataInstallment({
                               customerName: "",
+                              customerNationalCode: "",
                               policyType: "",
                               amount: "",
                               dueDate: "",
@@ -1721,6 +1758,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         </Label>
                         <div className="col-span-3">
                           <ClientOnlyDatePicker
+                            id="blog-date"
                             value={formDataBlog.date}
                             onChange={(date: string) => {
                               setFormDataBlog({ ...formDataBlog, date });

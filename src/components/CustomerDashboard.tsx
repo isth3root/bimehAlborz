@@ -139,8 +139,8 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">A</span>
+              <div className="w-12 h-10 rounded-lg flex items-center justify-center">
+                 <img src="./logo.png" alt="Logo" className="w-12 h-12 rounded-lg object-cover" />
               </div>
               <div>
                 <h1 className="text-lg">پنل مشتری</h1>
@@ -148,7 +148,7 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
               </div>
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center">
               <a href="tel:+989385540717">
                 <Button variant="ghost" size="sm">
                   <Phone className="h-4 w-4 ml-2" />
@@ -337,8 +337,8 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                 لیست اقساط معوق و آینده برای بیمه‌نامه شماره {selectedPolicy?.id}
               </DialogDescription>
             </DialogHeader>
-            <div className="mt-4">
-              <Table>
+            <div className="mt-4 overflow-x-auto">
+              <Table className="min-w-full">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-right">نوع بیمه</TableHead>
