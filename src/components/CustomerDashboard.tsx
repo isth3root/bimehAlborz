@@ -214,7 +214,24 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">امتیاز بیمه‌گذار</p>
-                  <p className="text-2xl text-green-600">A</p>
+                  <div className="flex flex-row-reverse justify-center items-center gap-4">
+                    {['A', 'B', 'C', 'D'].map((score) => (
+                      <span
+                        key={score}
+                        className={`${
+                          score === 'A'
+                            ? 'text-green-600 font-bold text-3xl'
+                            : score === 'B'
+                            ? 'text-blue-400 font-light text-sm'
+                            : score === 'C'
+                            ? 'text-yellow-400 font-light text-sm'
+                            : 'text-red-400 font-light text-sm'
+                        }`}
+                      >
+                        {score}
+                      </span>
+                    ))}
+                  </div>
                 </div>
                 <User className="h-8 w-8 text-green-600" />
               </div>

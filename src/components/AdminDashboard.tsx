@@ -46,7 +46,6 @@ import {
   Edit,
   Trash2,
   LogOut,
-  DollarSign,
   Calendar,
 } from "lucide-react";
 import { DatePicker } from "zaman";
@@ -126,6 +125,7 @@ interface Customer {
   joinDate: string;
   activePolicies: number;
   status: string;
+  score: 'A' | 'B' | 'C' | 'D';
   password?: string;
 }
 
@@ -138,6 +138,7 @@ interface Policy {
   endDate: string;
   premium: string;
   status: string;
+  paymentType: string;
   pdfFile?: File | null;
 }
 
@@ -165,6 +166,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       joinDate: "۱۴۰۳/۰۴/۱۵",
       activePolicies: 3,
       status: "فعال",
+      score: "A",
       password: "",
     },
     {
@@ -176,6 +178,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       joinDate: "۱۴۰۳/۰۳/۱۰",
       activePolicies: 1,
       status: "فعال",
+      score: "B",
       password: "",
     },
     {
@@ -187,6 +190,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       joinDate: "۱۴۰۳/۰۲/۰۵",
       activePolicies: 2,
       status: "غیرفعال",
+      score: "C",
       password: "",
     },
   ]);
@@ -198,6 +202,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     insuranceCode: "",
     phone: "",
     email: "",
+    score: "A" as 'A' | 'B' | 'C' | 'D',
   });
   const [deleteCustomer, setDeleteCustomer] = useState<Customer | null>(null);
   const [showCustomerForm, setShowCustomerForm] = useState(false);
@@ -212,6 +217,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       endDate: "۱۴۰۴/۰۶/۰۱",
       premium: "۵,۰۰۰,۰۰۰",
       status: "فعال",
+      paymentType: "نقدی",
       pdfFile: null,
     },
     {
@@ -223,6 +229,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       endDate: "۱۴۰۴/۰۶/۰۱",
       premium: "۱۶,۰۰۰,۰۰۰",
       status: "فعال",
+      paymentType: "اقساطی",
       pdfFile: null,
     },
     {
@@ -234,6 +241,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       endDate: "۱۴۰۴/۰۴/۱۵",
       premium: "۳,۰۰۰,۰۰۰",
       status: "نزدیک انقضا",
+      paymentType: "نقدی",
       pdfFile: null,
     },
   ]);
@@ -262,7 +270,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   ]);
 
   const [policySearchQuery, setPolicySearchQuery] = useState("");
-  const [isEditPolicyDialogOpen, setIsEditPolicyDialogOpen] = useState(false);
+  const [, setIsEditPolicyDialogOpen] = useState(false);
   const [editingPolicy, setEditingPolicy] = useState<Policy | null>(null);
   const [formDataPolicy, setFormDataPolicy] = useState({
     customerName: "",
@@ -273,6 +281,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     endDate: "",
     premium: "",
     status: "فعال",
+    paymentType: "نقدی",
     pdfFile: null as File | null,
   });
   const [deletePolicy, setDeletePolicy] = useState<Policy | null>(null);
@@ -311,6 +320,41 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [activeTab, setActiveTab] = useState("customers");
   const [showAddBlogForm, setShowAddBlogForm] = useState(false);
 
+  // Update policy statuses based on expiration dates
+  useEffect(() => {
+    const now = moment();
+    setPolicies(prevPolicies =>
+      prevPolicies.map(policy => {
+        const endDate = moment(policy.endDate, "jYYYY/jMM/jDD");
+        if (endDate.isBefore(now)) {
+          return { ...policy, status: "معوق" };
+        } else if (endDate.diff(now, 'months', true) <= 1) {
+          return { ...policy, status: "نزدیک انقضا" };
+        } else {
+          return { ...policy, status: "فعال" };
+        }
+      })
+    );
+  }, []);
+
+  // Update installment statuses based on due dates
+  useEffect(() => {
+    const now = moment();
+    setInstallments(prevInstallments =>
+      prevInstallments.map(installment => {
+        if (installment.status === "پرداخت شده") return installment; // Don't change paid installments
+        const dueDate = moment(installment.dueDate, "jYYYY/jMM/jDD");
+        if (dueDate.isBefore(now)) {
+          return { ...installment, status: "معوق" };
+        } else if (dueDate.diff(now, 'months', true) <= 1) {
+          return { ...installment, status: "نزدیک انقضا" };
+        } else {
+          return { ...installment, status: "آینده" };
+        }
+      })
+    );
+  }, []);
+
   const tabIndex =
     { customers: 0, policies: 1, installments: 2, blogs: 3 }[activeTab] || 0;
 
@@ -324,6 +368,12 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     (customer) =>
       customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       customer.nationalCode.includes(searchQuery)
+  );
+
+  const filteredPolicies = policies.filter(
+    (policy) =>
+      policy.id.includes(policySearchQuery) ||
+      policy.customerName.toLowerCase().includes(policySearchQuery.toLowerCase())
   );
 
   const handleAddCustomer = () => {
@@ -340,6 +390,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       joinDate: new Date().toLocaleDateString("fa-IR"),
       activePolicies: 0,
       status: "فعال",
+      score: formData.score,
       password: formData.insuranceCode,
     };
     setCustomers([...customers, newCustomer]);
@@ -349,6 +400,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       insuranceCode: "",
       phone: "",
       email: "",
+      score: "A",
     });
     setShowCustomerForm(false);
   };
@@ -365,6 +417,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
               phone: formData.phone,
               email: formData.email,
               password: formData.insuranceCode,
+              score: formData.score,
             }
           : c
       )
@@ -375,6 +428,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       insuranceCode: "",
       phone: "",
       email: "",
+      score: "A",
     });
     setShowCustomerForm(false);
     setEditingCustomer(null);
@@ -394,6 +448,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       insuranceCode: customer.password || "",
       phone: customer.phone,
       email: customer.email,
+      score: customer.score,
     });
     setShowCustomerForm(true);
   };
@@ -417,6 +472,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       endDate: "",
       premium: "",
       status: "فعال",
+      paymentType: "نقدی",
       pdfFile: null,
     });
     setShowAddPolicyForm(false);
@@ -438,6 +494,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       endDate: "",
       premium: "",
       status: "فعال",
+      paymentType: "نقدی",
       pdfFile: null,
     });
     setIsEditPolicyDialogOpen(false);
@@ -461,6 +518,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       endDate: policy.endDate,
       premium: policy.premium,
       status: policy.status,
+      paymentType: policy.paymentType,
       pdfFile: policy.pdfFile || null,
     });
     setShowAddPolicyForm(true);
@@ -727,18 +785,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-2">درآمد ماهانه</p>
-                  <p className="text-3xl">۲.۵ میلیارد</p>
-                  <p className="text-sm text-green-600 mt-1">+۱۵% از ماه قبل</p>
-                </div>
-                <DollarSign className="h-8 w-8 text-yellow-600" />
-              </div>
-            </CardContent>
-          </Card>
+          
 
           <Card>
             <CardContent className="p-6">
@@ -814,6 +861,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         insuranceCode: "",
                         phone: "",
                         email: "",
+                        score: "A",
                       });
                       setShowCustomerForm((prev) => !prev);
                     }}
@@ -904,6 +952,28 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           className="col-span-3"
                         />
                       </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="score" className="text-right">
+                          امتیاز مشتری
+                        </Label>
+                        <Select
+                          name="score"
+                          value={formData.score}
+                          onValueChange={(value: 'A' | 'B' | 'C' | 'D') =>
+                            setFormData({ ...formData, score: value })
+                          }
+                        >
+                          <SelectTrigger className="col-span-3">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="A">A</SelectItem>
+                            <SelectItem value="B">B</SelectItem>
+                            <SelectItem value="C">C</SelectItem>
+                            <SelectItem value="D">D</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       
                     </div>
                     <div className="flex gap-2 mt-4 justify-end">
@@ -919,6 +989,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                             insuranceCode: "",
                             phone: "",
                             email: "",
+                            score: "A",
                           });
                           setShowCustomerForm(false);
                         }}
@@ -947,8 +1018,9 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     <TableRow>
                       <TableHead className="text-left pl-8">عملیات</TableHead>
                       <TableHead className="text-right">وضعیت</TableHead>
+                      <TableHead className="text-right">امتیاز</TableHead>
                       <TableHead className="text-right">بیمه‌نامه‌های فعال</TableHead>
-                      <TableHead className="text-right">تاریخ عضویت</TableHead>
+                      
                       <TableHead className="text-right">شماره تماس</TableHead>
                       <TableHead className="text-right">کد ملی</TableHead>
                       <TableHead className="text-right">نام و نام خانوادگی</TableHead>
@@ -999,8 +1071,9 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           </div>
                         </TableCell>
                         <TableCell>{getStatusBadge(customer.status)}</TableCell>
+                        <TableCell>{customer.score}</TableCell>
                         <TableCell>{customer.activePolicies}</TableCell>
-                        <TableCell>{customer.joinDate}</TableCell>
+                        
                         <TableCell>{customer.phone}</TableCell>
                         <TableCell>{customer.nationalCode}</TableCell>
                         <TableCell>{customer.name}</TableCell>
@@ -1178,6 +1251,29 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         />
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="policy-paymentType" className="text-right">
+                          نوع پرداخت
+                        </Label>
+                        <Select
+                          name="paymentType"
+                          value={formDataPolicy.paymentType}
+                          onValueChange={(value: string) =>
+                            setFormDataPolicy({
+                              ...formDataPolicy,
+                              paymentType: value,
+                            })
+                          }
+                        >
+                          <SelectTrigger className="col-span-3">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="نقدی">نقدی</SelectItem>
+                            <SelectItem value="اقساطی">اقساطی</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="policy-pdf" className="text-right">
                           فایل PDF
                         </Label>
@@ -1215,6 +1311,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                               endDate: "",
                               premium: "",
                               status: "فعال",
+                              paymentType: "نقدی",
                               pdfFile: null,
                             });
                             setShowAddPolicyForm(false);
@@ -1230,7 +1327,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   <div className="relative">
                     <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
-                      placeholder="جستجو بر اساس شماره بیمه‌نامه..."
+                      placeholder="جستجو بر اساس شماره بیمه‌نامه یا نام مشتری..."
                       dir="rtl"
                       value={policySearchQuery}
                       onChange={(e) => setPolicySearchQuery(e.target.value)}
@@ -1240,21 +1337,22 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 </div>
 
                 <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-left pl-8">عملیات</TableHead>
-                      <TableHead className="text-right">وضعیت</TableHead>
-                      <TableHead className="text-right">حق بیمه</TableHead>
-                      <TableHead className="text-right">تاریخ انقضا</TableHead>
-                      <TableHead className="text-right">تاریخ شروع</TableHead>
-                      <TableHead className="text-right">موضوع بیمه</TableHead>
-                      <TableHead className="text-right">نوع بیمه</TableHead>
-                      <TableHead className="text-right">نام مشتری</TableHead>
-                      <TableHead className="text-right">شماره بیمه‌نامه</TableHead>
-                    </TableRow>
-                  </TableHeader>
+                   <TableHeader>
+                     <TableRow>
+                       <TableHead className="text-left pl-8">عملیات</TableHead>
+                       <TableHead className="text-right">وضعیت</TableHead>
+                       <TableHead className="text-right">نوع پرداخت</TableHead>
+                       <TableHead className="text-right">حق بیمه</TableHead>
+                       <TableHead className="text-right">تاریخ انقضا</TableHead>
+                       <TableHead className="text-right">تاریخ شروع</TableHead>
+                       <TableHead className="text-right">موضوع بیمه</TableHead>
+                       <TableHead className="text-right">نوع بیمه</TableHead>
+                       <TableHead className="text-right">نام مشتری</TableHead>
+                       <TableHead className="text-right">شماره بیمه‌نامه</TableHead>
+                     </TableRow>
+                   </TableHeader>
                   <TableBody>
-                    {policies.map((policy) => (
+                    {filteredPolicies.map((policy) => (
                       <TableRow key={policy.id}>
                         <TableCell>
                           <div className="flex gap-2">
@@ -1300,6 +1398,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           </div>
                         </TableCell>
                         <TableCell>{getStatusBadge(policy.status)}</TableCell>
+                        <TableCell>{policy.paymentType}</TableCell>
                         <TableCell>{formatPrice(policy.premium)}</TableCell>
                         <TableCell>{policy.endDate}</TableCell>
                         <TableCell>{policy.startDate}</TableCell>
@@ -1471,6 +1570,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="معوق">معوق</SelectItem>
+                            <SelectItem value="نزدیک انقضا">نزدیک انقضا</SelectItem>
                             <SelectItem value="آینده">آینده</SelectItem>
                             <SelectItem value="پرداخت شده">
                               پرداخت شده
