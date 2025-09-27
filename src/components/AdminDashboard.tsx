@@ -356,26 +356,12 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       });
       const policiesCount = policiesCountResponse.ok ? await policiesCountResponse.json() : 0;
 
-      const overdueResponse = await fetch('http://localhost:3000/installments/overdue/count', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const overdueInstallmentsCount = overdueResponse.ok ? await overdueResponse.json() : 0;
-
-      const nearExpireResponse = await fetch('http://localhost:3000/installments/near-expire/count', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const nearExpireInstallmentsCount = nearExpireResponse.ok ? await nearExpireResponse.json() : 0;
-
-      setStats({
+      // The counts will be calculated on the client-side from the fetched installments
+      setStats(prevStats => ({
+        ...prevStats,
         customersCount,
         policiesCount,
-        overdueInstallmentsCount,
-        nearExpireInstallmentsCount,
-      });
+      }));
     } catch (error) {
       console.error('Error fetching policies:', error);
       if (error instanceof Error && error.message.includes('401')) {
@@ -401,6 +387,10 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       if (response.ok) {
         const data = await response.json();
         const now = moment();
+
+        let overdueCount = 0;
+        let nearExpireCount = 0;
+
         const processedInstallments = data.map((i: any) => {
           const dueDate = new Date(i.due_date);
           const momentDueDate = moment(dueDate);
@@ -410,8 +400,10 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           if (status !== 'پرداخت شده') {
             if (momentDueDate.isBefore(now, 'day')) {
               status = 'معوق';
+              overdueCount++;
             } else if (momentDueDate.diff(now, 'days') <= 30) {
               status = 'نزدیک انقضا';
+              nearExpireCount++;
             } else {
               status = 'آینده';
             }
@@ -429,7 +421,13 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             customerNationalCode: i.customer ? i.customer.national_code : '',
           };
         });
+
         setInstallments(processedInstallments);
+        setStats(prevStats => ({
+          ...prevStats,
+          overdueInstallmentsCount: overdueCount,
+          nearExpireInstallmentsCount: nearExpireCount,
+        }));
       } else {
         console.error('Failed to fetch installments:', response.status, response.statusText);
         toast.error('خطا در بارگیری اقساط');

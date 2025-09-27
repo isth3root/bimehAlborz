@@ -54,8 +54,6 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
           customerResponse,
           policiesResponse,
           installmentsResponse,
-          overdueCountResponse,
-          nearExpireCountResponse,
         ] = await Promise.all([
           fetch(`http://localhost:3000/admin/customers/by-national/${userId}`, {
             headers: { Authorization: `Bearer ${token}` },
@@ -64,12 +62,6 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
             headers: { Authorization: `Bearer ${token}` },
           }),
           fetch(`http://localhost:3000/installments/customer`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`http://localhost:3000/installments/customer/overdue/count`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`http://localhost:3000/installments/customer/near-expire/count`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
@@ -109,16 +101,33 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
           setInsurancePolicies(policies);
         }
 
-        // Process installments
+        // Process installments and calculate stats
         if (installmentsResponse.ok) {
           const data = await installmentsResponse.json();
-          setAllInstallments(data);
-        }
+          const now = new Date();
+          let overdueCount = 0;
+          let nearExpireCount = 0;
 
-        // Process stats
-        const overdueCount = overdueCountResponse.ok ? await overdueCountResponse.json() : 0;
-        const nearExpireCount = nearExpireCountResponse.ok ? await nearExpireCount.json() : 0;
-        setStats({ overdueCount, nearExpireCount });
+          const processedInstallments = data.map((inst: any) => {
+            let status = inst.status;
+            if (status !== 'پرداخت شده') {
+              const dueDate = new Date(inst.due_date);
+              if (dueDate < now) {
+                status = 'معوق';
+                overdueCount++;
+              } else if ((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24) <= 30) {
+                status = 'نزدیک انقضا';
+                nearExpireCount++;
+              } else {
+                status = 'آینده';
+              }
+            }
+            return { ...inst, status };
+          });
+
+          setAllInstallments(processedInstallments);
+          setStats({ overdueCount, nearExpireCount });
+        }
 
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -413,6 +422,7 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                   <TableHead className='text-right'>مبلغ</TableHead>
                   <TableHead className='text-right'>سررسید</TableHead>
                   <TableHead className='text-right'>وضعیت</TableHead>
+                  <TableHead className='text-right'>عملیات</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -426,6 +436,13 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                     <TableCell>{parseFloat(installment.amount).toLocaleString('fa-IR')} ریال</TableCell>
                     <TableCell>{new Date(installment.due_date).toLocaleDateString('fa-IR')}</TableCell>
                     <TableCell>{getPaymentStatusBadge(installment.status)}</TableCell>
+                    <TableCell>
+                      {installment.pay_link && (
+                        <Button size="sm" onClick={() => window.open(installment.pay_link, '_blank')}>
+                          پرداخت
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -450,6 +467,7 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                     <TableHead className='text-right'>مبلغ</TableHead>
                     <TableHead className='text-right'>سررسید</TableHead>
                     <TableHead className='text-right'>وضعیت</TableHead>
+                    <TableHead className='text-right'>عملیات</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -462,6 +480,13 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                       <TableCell>{parseFloat(installment.amount).toLocaleString('fa-IR')} ریال</TableCell>
                       <TableCell>{new Date(installment.due_date).toLocaleDateString('fa-IR')}</TableCell>
                       <TableCell>{getPaymentStatusBadge(installment.status)}</TableCell>
+                      <TableCell>
+                        {installment.pay_link && (
+                          <Button size="sm" onClick={() => window.open(installment.pay_link, '_blank')}>
+                            پرداخت
+                          </Button>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
