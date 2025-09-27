@@ -152,8 +152,6 @@ interface Policy {
   payId?: string;
   installmentsCount?: number;
   pdfFile?: File | null;
-  customerNationalCode?: string;
-  pay_link?: string;
 }
 
 interface Installment {
@@ -179,7 +177,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     customersCount: 0,
     policiesCount: 0,
     overdueInstallmentsCount: 0,
-    nearExpireInstallmentsCount: 0,
   });
 
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -211,7 +208,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     payId: "",
     installmentsCount: 0,
     pdfFile: null as File | null,
-    pay_link: "",
   });
   const [deletePolicy, setDeletePolicy] = useState<Policy | null>(null);
   const [showAddPolicyForm, setShowAddPolicyForm] = useState(false);
@@ -321,7 +317,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       setPolicies(data.map((p: any) => ({
         id: p.id.toString(),
         customerName: p.customer ? p.customer.full_name : 'Unknown',
-        customerNationalCode: p.customer_national_code || (p.customer ? p.customer.national_code : ''),
         type: p.insurance_type,
         vehicle: p.details,
         startDate: p.start_date ? new Date(p.start_date).toLocaleDateString('fa-IR') : '',
@@ -332,7 +327,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         payId: p.payment_id,
         installmentsCount: p.installment_count,
         pdfFile: null,
-        pay_link: p.pay_link,
       })));
       
       // Update customers with active policies count
@@ -359,12 +353,18 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       });
       const policiesCount = policiesCountResponse.ok ? await policiesCountResponse.json() : 0;
 
-      // The counts will be calculated on the client-side from the fetched installments
-      setStats(prevStats => ({
-        ...prevStats,
+      const overdueResponse = await fetch('http://localhost:3000/installments/overdue/count', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const overdueInstallmentsCount = overdueResponse.ok ? await overdueResponse.json() : 0;
+
+      setStats({
         customersCount,
         policiesCount,
-      }));
+        overdueInstallmentsCount,
+      });
     } catch (error) {
       console.error('Error fetching policies:', error);
       if (error instanceof Error && error.message.includes('401')) {
@@ -380,69 +380,43 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     }
   }, [token, onLogout]);
 
-  const refetchAndProcessInstallments = async () => {
-    try {
-      const response = await fetch('http://localhost:3000/installments/admin', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        const now = moment();
-
-        let overdueCount = 0;
-        let nearExpireCount = 0;
-
-        const processedInstallments = data.map((i: any) => {
-          const momentDueDate = moment(i.due_date); // The date from backend is in ISO format
-          const daysOverdue = momentDueDate.isBefore(now, 'day') ? now.diff(momentDueDate, 'days') : 0;
-
-          let status = i.status;
-          if (status !== 'پرداخت شده') {
-            if (momentDueDate.isBefore(now, 'day')) {
-              status = 'معوق';
-              overdueCount++;
-            } else if (momentDueDate.isSameOrBefore(moment(now).add(1, 'jMonth'))) {
-              status = 'نزدیک انقضا';
-              nearExpireCount++;
-            } else {
-              status = 'آینده';
-            }
-          }
-
-          return {
-            id: i.id.toString(),
-            customerName: i.customer ? i.customer.full_name : 'Unknown',
-            policyType: i.policy ? i.policy.insurance_type : 'Unknown',
-            amount: i.amount.toString(),
-            dueDate: momentDueDate.format('jYYYY/jMM/jDD'),
-            status: status,
-            daysOverdue,
-            payLink: i.pay_link || '',
-            customerNationalCode: i.customer ? i.customer.national_code : '',
-          };
-        });
-
-        setInstallments(processedInstallments);
-        setStats(prevStats => ({
-          ...prevStats,
-          overdueInstallmentsCount: overdueCount,
-          nearExpireInstallmentsCount: nearExpireCount,
-        }));
-      } else {
-        console.error('Failed to fetch installments:', response.status, response.statusText);
-        toast.error('خطا در بارگیری اقساط');
-      }
-    } catch (error) {
-      console.error('Error fetching installments:', error);
-      toast.error('خطا در بارگیری اقساط');
-    }
-  };
-
   useEffect(() => {
+    const fetchInstallments = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/installments/admin', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const processedInstallments = data.map((i: any) => {
+            const dueDate = new Date(i.due_date);
+            const now = new Date();
+            const daysOverdue = dueDate < now ? Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+            return {
+              id: i.id.toString(),
+              customerName: i.customer ? i.customer.full_name : 'Unknown',
+              policyType: i.policy ? i.policy.insurance_type : 'Unknown',
+              amount: i.amount.toString(),
+              dueDate: dueDate.toLocaleDateString('fa-IR'),
+              status: i.status || 'معوق',
+              daysOverdue,
+              payLink: i.pay_link || '',
+              customerNationalCode: i.customer ? i.customer.national_code : '',
+            };
+          });
+          setInstallments(processedInstallments);
+        } else {
+          console.error('Failed to fetch installments:', response.status, response.statusText);
+        }
+      } catch (error) {
+        console.error('Error fetching installments:', error);
+      }
+    };
+
     if (token && customers.length > 0 && policies.length > 0) {
-      refetchAndProcessInstallments();
+      fetchInstallments();
     }
   }, [token, customers, policies]);
 
@@ -463,18 +437,30 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     );
   }, []);
 
+  // Update installment statuses based on due dates
+  useEffect(() => {
+    const now = moment();
+    setInstallments(prevInstallments =>
+      prevInstallments.map(installment => {
+        if (installment.status === "پرداخت شده") return installment; // Don't change paid installments
+        const dueDate = moment(installment.dueDate, "jYYYY/jMM/jDD");
+        if (dueDate.isBefore(now)) {
+          return { ...installment, status: "معوق" };
+        } else if (dueDate.diff(now, 'days') <= 30) {
+          return { ...installment, status: "نزدیک انقضا" };
+        } else {
+          return { ...installment, status: "آینده" };
+        }
+      })
+    );
+  }, []);
+
   const tabIndex =
     { customers: 0, policies: 1, installments: 2, blogs: 3 }[activeTab] || 0;
 
   const formatPrice = (price: string) => {
-    // The value from backend might be a decimal string like "10000000.00"
-    const numericValue = parseFloat(price);
-    if (isNaN(numericValue)) {
-      return "0 ریال";
-    }
-    // Round to nearest integer to remove decimal part
-    const integerValue = Math.round(numericValue);
-    const formatted = integerValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    const numeric = price.replace(/[^\d]/g, "");
+    const formatted = numeric.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     return `${formatted} ریال`;
   };
 
@@ -668,30 +654,29 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       return;
     }
     try {
+      const formData = new FormData();
+      formData.append('customer_id', formDataPolicy.customerNationalCode); // Assuming nationalCode is the id, but wait, customer_id is int, nationalCode is string.
+      // Need to find customer by nationalCode to get id.
       const customer = customers.find(c => c.nationalCode === formDataPolicy.customerNationalCode);
-      if (!customer || !customer.id) {
-        toast.error("مشتری معتبر یافت نشد.");
+      if (!customer) {
+        toast.error("مشتری یافت نشد.");
         return;
       }
-
-      const formData = new FormData();
-      formData.append('customer_id', customer.id);
+      if (!customer.id || isNaN(parseInt(customer.id))) {
+        toast.error("شناسه مشتری نامعتبر.");
+        return;
+      }
       formData.append('customer_national_code', formDataPolicy.customerNationalCode);
       formData.append('insurance_type', formDataPolicy.type);
       formData.append('details', formDataPolicy.vehicle);
       formData.append('start_date', moment(formDataPolicy.startDate, "jYYYY/jMM/jDD").format("YYYY-MM-DD"));
-
-      // Set end_date to the first day of the month
-      const endDate = moment(formDataPolicy.endDate, "jYYYY/jMM/jDD").startOf('jMonth').format("YYYY-MM-DD");
-      formData.append('end_date', endDate);
-
+      formData.append('end_date', moment(formDataPolicy.endDate, "jYYYY/jMM/jDD").format("YYYY-MM-DD"));
       formData.append('premium', formDataPolicy.premium.replace(/,/g, ''));
       formData.append('payment_type', formDataPolicy.paymentType);
       formData.append('installment_count', formDataPolicy.installmentsCount.toString());
       formData.append('payment_id', formDataPolicy.payId);
-      formData.append('pay_link', formDataPolicy.pay_link);
       if (formDataPolicy.pdfFile) {
-        formData.append('pdf', formDataPolicy.pdfFile, formDataPolicy.pdfFile.name);
+        formData.append('pdf', formDataPolicy.pdfFile);
       }
 
       const response = await fetch('http://localhost:3000/admin/policies', {
@@ -701,28 +686,22 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         },
         body: formData,
       });
-
       if (response.ok) {
         const newPolicy = await response.json();
-
         setPolicies([...policies, {
           id: newPolicy.id.toString(),
-          customerName: newPolicy.customer ? newPolicy.customer.full_name : 'Unknown',
+          customerName: formDataPolicy.customerName,
           type: newPolicy.insurance_type,
           vehicle: newPolicy.details,
-          startDate: new Date(newPolicy.start_date).toLocaleDateString('fa-IR'),
-          endDate: new Date(newPolicy.end_date).toLocaleDateString('fa-IR'),
+          startDate: formDataPolicy.startDate,
+          endDate: formDataPolicy.endDate,
           premium: newPolicy.premium.toString(),
-          status: 'فعال', // Will be recalculated by useEffect
+          status: 'فعال',
           paymentType: newPolicy.payment_type,
           payId: newPolicy.payment_id,
           installmentsCount: newPolicy.installment_count,
           pdfFile: null,
         }]);
-
-        // Refetch installments to include newly created ones
-        await refetchAndProcessInstallments();
-
         toast.success("بیمه‌نامه با موفقیت اضافه شد.");
         setFormDataPolicy({
           customerName: "",
@@ -737,12 +716,10 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           payId: "",
           installmentsCount: 0,
           pdfFile: null,
-                          pay_link: "",
         });
         setShowAddPolicyForm(false);
       } else {
-        const errorData = await response.json();
-        toast.error(`خطا در افزودن بیمه‌نامه: ${errorData.message || 'خطای سرور'}`);
+        toast.error('خطا در افزودن بیمه‌نامه');
       }
     } catch (error) {
       console.error('Error:', error);
@@ -753,7 +730,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const handleEditPolicy = async () => {
     if (!editingPolicy) return;
     try {
-      const endDate = moment(formDataPolicy.endDate, "jYYYY/jMM/jDD").startOf('jMonth').format("YYYY-MM-DD");
       const response = await fetch(`http://localhost:3000/admin/policies/${editingPolicy.id}`, {
         method: 'PUT',
         headers: {
@@ -765,12 +741,11 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           insurance_type: formDataPolicy.type,
           details: formDataPolicy.vehicle,
           start_date: moment(formDataPolicy.startDate, "jYYYY/jMM/jDD").format("YYYY-MM-DD"),
-          end_date: endDate,
+          end_date: moment(formDataPolicy.endDate, "jYYYY/jMM/jDD").format("YYYY-MM-DD"),
           premium: formDataPolicy.premium.replace(/,/g, ''),
           payment_type: formDataPolicy.paymentType,
           installment_count: formDataPolicy.installmentsCount,
           payment_id: formDataPolicy.payId,
-          pay_link: formDataPolicy.pay_link,
         }),
       });
       if (response.ok) {
@@ -780,12 +755,11 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             p.id === editingPolicy.id
               ? {
                   ...p,
-                  customerName: updatedPolicy.customer ? updatedPolicy.customer.full_name : formDataPolicy.customerName,
-                  customerNationalCode: updatedPolicy.customer_national_code,
+                  customerName: formDataPolicy.customerName,
                   type: updatedPolicy.insurance_type,
                   vehicle: updatedPolicy.details,
-                  startDate: new Date(updatedPolicy.start_date).toLocaleDateString('fa-IR'),
-                  endDate: new Date(updatedPolicy.end_date).toLocaleDateString('fa-IR'),
+                  startDate: formDataPolicy.startDate,
+                  endDate: formDataPolicy.endDate,
                   premium: updatedPolicy.premium.toString(),
                   paymentType: updatedPolicy.payment_type,
                   payId: updatedPolicy.payment_id,
@@ -831,9 +805,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       });
       if (response.ok) {
         setPolicies(policies.filter((p) => p.id !== deletePolicy.id));
-        await refetchAndProcessInstallments(); // Refetch installments
         setDeletePolicy(null);
-        toast.success("بیمه‌نامه با موفقیت حذف شد.");
       } else {
         toast.error('خطا در حذف بیمه‌نامه');
       }
@@ -847,7 +819,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     setEditingPolicy(policy);
     setFormDataPolicy({
       customerName: policy.customerName,
-      customerNationalCode: policy.customerNationalCode || "",
+      customerNationalCode: "",
       type: policy.type,
       vehicle: policy.vehicle,
       startDate: policy.startDate,
@@ -858,14 +830,45 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       payId: policy.payId || "",
       installmentsCount: policy.installmentsCount || 0,
       pdfFile: policy.pdfFile || null,
-      pay_link: policy.pay_link || "",
     });
     setShowAddPolicyForm(true);
+  };
+
+  const handleAddInstallment = () => {
+    if (!formDataInstallment.customerName.trim() || !formDataInstallment.policyType.trim() || !formDataInstallment.amount.trim() || !formDataInstallment.dueDate.trim()) {
+      alert("لطفا تمام فیلدهای مورد نیاز را پر کنید.");
+      return;
+    }
+    const newInstallment: Installment = {
+      id: Date.now().toString(),
+      ...formDataInstallment,
+      status: "معوق",
+      daysOverdue: 0,
+    };
+    setInstallments([...installments, newInstallment]);
+    setFormDataInstallment({
+      customerName: "",
+      customerNationalCode: "",
+      policyType: "",
+      amount: "",
+      dueDate: "",
+      payLink: "",
+      status: "معوق",
+    });
+    setShowAddInstallmentForm(false);
   };
 
   const handleEditInstallment = async () => {
     if (!editingInstallment) return;
     try {
+      // Find the original installment to get policy_id and customer_id
+      const originalInstallment = installments.find(i => i.id === editingInstallment.id);
+      if (!originalInstallment) {
+        toast.error('قسط مورد نظر یافت نشد');
+        return;
+      }
+
+      // Prepare the update data according to backend entity structure
       const updateData: any = {
         amount: parseFloat(formDataInstallment.amount.replace(/,/g, '')),
         due_date: moment(formDataInstallment.dueDate, "jYYYY/jMM/jDD").format("YYYY-MM-DD"),
@@ -883,7 +886,27 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       });
       
       if (response.ok) {
-        await refetchAndProcessInstallments(); // Refetch to get updated status
+        const updatedInstallment = await response.json();
+
+        // Update local state with the response
+        setInstallments(
+          installments.map((i) =>
+            i.id === editingInstallment.id
+              ? {
+                  ...i,
+                  amount: formDataInstallment.amount,
+                  dueDate: formDataInstallment.dueDate,
+                  payLink: formDataInstallment.payLink,
+                  status: formDataInstallment.status,
+                  // Keep the original customer and policy info
+                  customerName: i.customerName,
+                  customerNationalCode: i.customerNationalCode,
+                  policyType: i.policyType,
+                }
+              : i
+          )
+        );
+
         toast.success("قسط با موفقیت بروزرسانی شد.");
         setFormDataInstallment({
           customerName: "",
@@ -907,26 +930,10 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     }
   };
 
-  const handleDeleteInstallment = async () => {
+  const handleDeleteInstallment = () => {
     if (!deleteInstallment) return;
-    try {
-      const response = await fetch(`http://localhost:3000/installments/${deleteInstallment.id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (response.ok) {
-        setInstallments(installments.filter((i) => i.id !== deleteInstallment.id));
-        setDeleteInstallment(null);
-        toast.success("قسط با موفقیت حذف شد.");
-      } else {
-        toast.error('خطا در حذف قسط');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('خطا در حذف قسط');
-    }
+    setInstallments(installments.filter((i) => i.id !== deleteInstallment.id));
+    setDeleteInstallment(null);
   };
 
   const openEditInstallmentDialog = (installment: Installment) => {
@@ -1109,19 +1116,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-2">اقساط نزدیک سررسید</p>
-                  <p className="text-3xl text-yellow-600">{stats.nearExpireInstallmentsCount}</p>
-                  <p className="text-sm text-green-600 mt-1">آمار به‌روز</p>
-                </div>
-                <CreditCard className="h-8 w-8 text-yellow-600" />
-              </div>
-            </CardContent>
-          </Card>
-
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -1408,66 +1402,58 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredCustomers.length > 0 ? (
-                      filteredCustomers.map((customer) => (
-                        <TableRow key={customer.id}>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => openEditDialog(customer)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="text-red-600 hover:text-red-700"
-                                    onClick={() => setDeleteCustomer(customer)}
+                    {filteredCustomers.map((customer) => (
+                      <TableRow key={customer.id}>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openEditDialog(customer)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-red-600 hover:text-red-700"
+                                  onClick={() => setDeleteCustomer(customer)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>حذف مشتری</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    آیا مطمئن هستید که می‌خواهید این مشتری را
+                                    حذف کنید؟ این عمل قابل بازگشت نیست.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>لغو</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={handleDeleteCustomer}
+                                    className="bg-red-600 hover:bg-red-700"
                                   >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>حذف مشتری</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      آیا مطمئن هستید که می‌خواهید این مشتری را
-                                      حذف کنید؟ این عمل قابل بازگشت نیست.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>لغو</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={handleDeleteCustomer}
-                                      className="bg-red-600 hover:bg-red-700"
-                                    >
-                                      حذف
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
-                          </TableCell>
-                          <TableCell>{getStatusBadge(customer.status)}</TableCell>
-                          <TableCell>{customer.score}</TableCell>
-                          <TableCell>{customer.activePolicies}</TableCell>
-
-                          <TableCell>{customer.phone}</TableCell>
-                          <TableCell>{customer.nationalCode}</TableCell>
-                          <TableCell>{customer.name}</TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center h-24">
-                          هیچ مشتری‌ای یافت نشد. برای افزودن مشتری جدید روی دکمه "افزودن مشتری" کلیک کنید.
+                                    حذف
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
                         </TableCell>
+                        <TableCell>{getStatusBadge(customer.status)}</TableCell>
+                        <TableCell>{customer.score}</TableCell>
+                        <TableCell>{customer.activePolicies}</TableCell>
+
+                        <TableCell>{customer.phone}</TableCell>
+                        <TableCell>{customer.nationalCode}</TableCell>
+                        <TableCell>{customer.name}</TableCell>
                       </TableRow>
-                    )}
+                    ))}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -1484,25 +1470,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     <CardTitle>مدیریت بیمه‌نامه‌ها</CardTitle>
                   </div>
                   <Button
-                    onClick={() => {
-                      setEditingPolicy(null);
-                      setFormDataPolicy({
-                        customerName: "",
-                        customerNationalCode: "",
-                        type: "",
-                        vehicle: "",
-                        startDate: "",
-                        endDate: "",
-                        premium: "",
-                        status: "فعال",
-                        paymentType: "اقساطی",
-                        payId: "",
-                        installmentsCount: 0,
-                        pdfFile: null,
-                        pay_link: "",
-                      });
-                      setShowAddPolicyForm(true);
-                    }}
+                    onClick={() => setShowAddPolicyForm((prev) => !prev)}
+                    variant={showAddPolicyForm ? "outline" : "default"}
                   >
                     <Plus className="h-4 w-4 ml-2" />
                     صدور بیمه‌نامه
@@ -1744,23 +1713,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         />
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="policy-pay_link" className="text-right">
-                          لینک پرداخت پایه
-                        </Label>
-                        <Input
-                          id="policy-pay_link"
-                          name="pay_link"
-                          value={formDataPolicy.pay_link}
-                          onChange={(e) =>
-                            setFormDataPolicy({
-                              ...formDataPolicy,
-                              pay_link: e.target.value,
-                            })
-                          }
-                          className="col-span-3"
-                        />
-                      </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="policy-pdf" className="text-right">
                           فایل PDF
                         </Label>
@@ -1843,72 +1795,64 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                      </TableRow>
                    </TableHeader>
                   <TableBody>
-                    {filteredPolicies.length > 0 ? (
-                      filteredPolicies.map((policy) => (
-                        <TableRow key={policy.id}>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => openEditPolicyDialog(policy)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="text-red-600 hover:text-red-700"
-                                    onClick={() => setDeletePolicy(policy)}
+                    {filteredPolicies.map((policy) => (
+                      <TableRow key={policy.id}>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openEditPolicyDialog(policy)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-red-600 hover:text-red-700"
+                                  onClick={() => setDeletePolicy(policy)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    حذف بیمه‌نامه
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    آیا مطمئن هستید که می‌خواهید این بیمه‌نامه
+                                    را حذف کنید؟ این عمل قابل بازگشت نیست.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>لغو</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={handleDeletePolicy}
+                                    className="bg-red-600 hover:bg-red-700"
                                   >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>
-                                      حذف بیمه‌نامه
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      آیا مطمئن هستید که می‌خواهید این بیمه‌نامه
-                                      را حذف کنید؟ این عمل قابل بازگشت نیست.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>لغو</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={handleDeletePolicy}
-                                      className="bg-red-600 hover:bg-red-700"
-                                    >
-                                      حذف
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
-                          </TableCell>
-                          <TableCell>{getStatusBadge(policy.status)}</TableCell>
-                          <TableCell>{policy.paymentType}</TableCell>
-                          <TableCell>{policy.payId}</TableCell>
-                          <TableCell>{policy.installmentsCount || 0}</TableCell>
-                          <TableCell>{formatPrice(policy.premium)}</TableCell>
-                          <TableCell>{policy.endDate}</TableCell>
-                          <TableCell>{policy.startDate}</TableCell>
-                          <TableCell>{policy.vehicle}</TableCell>
-                          <TableCell>{policy.type}</TableCell>
-                          <TableCell>{policy.customerName}</TableCell>
-                          <TableCell>{policy.id}</TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={12} className="text-center h-24">
-                          هیچ بیمه‌نامه‌ای یافت نشد. برای افزودن بیمه‌نامه جدید روی دکمه "صدور بیمه‌نامه" کلیک کنید.
+                                    حذف
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
                         </TableCell>
+                        <TableCell>{getStatusBadge(policy.status)}</TableCell>
+                        <TableCell>{policy.paymentType}</TableCell>
+                        <TableCell>{policy.payId}</TableCell>
+                        <TableCell>{policy.installmentsCount || 0}</TableCell>
+                        <TableCell>{formatPrice(policy.premium)}</TableCell>
+                        <TableCell>{policy.endDate}</TableCell>
+                        <TableCell>{policy.startDate}</TableCell>
+                        <TableCell>{policy.vehicle}</TableCell>
+                        <TableCell>{policy.type}</TableCell>
+                        <TableCell>{policy.customerName}</TableCell>
+                        <TableCell>{policy.id}</TableCell>
                       </TableRow>
-                    )}
+                    ))}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -1924,7 +1868,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <div className="flex items-center justify-between">
                   <CardTitle>مدیریت اقساط</CardTitle>
                   <Button
-                    onClick={() => toast.info("اقساط به طور خودکار با ایجاد بیمه‌نامه اقساطی اضافه می‌شوند.")}
+                    onClick={() => setShowAddInstallmentForm((prev) => !prev)}
+                    variant={showAddInstallmentForm ? "outline" : "default"}
                   >
                     <Plus className="h-4 w-4 ml-2" />
                     افزودن قسط
@@ -2207,81 +2152,71 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {sortedInstallments.length > 0 ? (
-                      sortedInstallments.map((installment) => (
-                        <TableRow key={installment.id}>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() =>
-                                  openEditInstallmentDialog(installment)
-                                }
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="text-red-600 hover:text-red-700"
-                                    onClick={() =>
-                                      setDeleteInstallment(installment)
-                                    }
+                    {sortedInstallments.map((installment) => (
+                      <TableRow key={installment.id}>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                openEditInstallmentDialog(installment)
+                              }
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-red-600 hover:text-red-700"
+                                  onClick={() =>
+                                    setDeleteInstallment(installment)
+                                  }
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>حذف قسط</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    آیا مطمئن هستید که می‌خواهید این قسط را حذف
+                                    کنید؟ این عمل قابل بازگشت نیست.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>لغو</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={handleDeleteInstallment}
+                                    className="bg-red-600 hover:bg-red-700"
                                   >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>حذف قسط</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      آیا مطمئن هستید که می‌خواهید این قسط را حذف
-                                      کنید؟ این عمل قابل بازگشت نیست.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>لغو</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={handleDeleteInstallment}
-                                      className="bg-red-600 hover:bg-red-700"
-                                    >
-                                      حذف
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {getStatusBadge(installment.status)}
-                          </TableCell>
-                          <TableCell>
-                            {installment.status === 'پرداخت شده' ? (
-                              "—"
-                            ) : installment.daysOverdue > 0 ? (
-                              <span className="text-red-600">
-                                {installment.daysOverdue} روز
-                              </span>
-                            ) : (
-                              "—"
-                            )}
-                          </TableCell>
-                          <TableCell>{installment.dueDate}</TableCell>
-                          <TableCell>{formatPrice(installment.amount)}</TableCell>
-                          <TableCell>{installment.policyType}</TableCell>
-                          <TableCell>{installment.customerName}</TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center h-24">
-                          هیچ قسطی یافت نشد. اقساط به طور خودکار با ایجاد بیمه‌نامه اقساطی اضافه می‌شوند.
+                                    حذف
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
                         </TableCell>
+                        <TableCell>
+                          {getStatusBadge(installment.status)}
+                        </TableCell>
+                        <TableCell>
+                          {installment.daysOverdue > 0 ? (
+                            <span className="text-red-600">
+                              {installment.daysOverdue} روز
+                            </span>
+                          ) : (
+                            "-"
+                          )}
+                        </TableCell>
+                        <TableCell>{installment.dueDate}</TableCell>
+                        <TableCell>{formatPrice(installment.amount)}</TableCell>
+                        <TableCell>{installment.policyType}</TableCell>
+                        <TableCell>{installment.customerName}</TableCell>
                       </TableRow>
-                    )}
+                    ))}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -2475,64 +2410,56 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredBlogs.length > 0 ? (
-                      filteredBlogs.map((blog) => (
-                        <TableRow key={blog.id}>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => openEditBlogDialog(blog)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="text-red-600 hover:text-red-700"
-                                    onClick={() => setDeleteBlogId(blog.id)}
+                    {filteredBlogs.map((blog) => (
+                      <TableRow key={blog.id}>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openEditBlogDialog(blog)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-red-600 hover:text-red-700"
+                                  onClick={() => setDeleteBlogId(blog.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>حذف مقاله</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    آیا مطمئن هستید که می‌خواهید این مقاله را
+                                    حذف کنید؟ این عمل قابل بازگشت نیست.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>لغو</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={handleDeleteBlog}
+                                    className="bg-red-600 hover:bg-red-700"
                                   >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>حذف مقاله</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      آیا مطمئن هستید که می‌خواهید این مقاله را
-                                      حذف کنید؟ این عمل قابل بازگشت نیست.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>لغو</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={handleDeleteBlog}
-                                      className="bg-red-600 hover:bg-red-700"
-                                    >
-                                      حذف
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
-                          </TableCell>
-                          <TableCell>{blog.date}</TableCell>
-                          <TableCell>{blog.category}</TableCell>
-                          <TableCell className="max-w-xs truncate">
-                            {blog.title}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-center h-24">
-                          هیچ مقاله‌ای یافت نشد. برای افزودن مقاله جدید روی دکمه "افزودن مقاله" کلیک کنید.
+                                    حذف
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                        <TableCell>{blog.date}</TableCell>
+                        <TableCell>{blog.category}</TableCell>
+                        <TableCell className="max-w-xs truncate">
+                          {blog.title}
                         </TableCell>
                       </TableRow>
-                    )}
+                    ))}
                   </TableBody>
                 </Table>
               </CardContent>

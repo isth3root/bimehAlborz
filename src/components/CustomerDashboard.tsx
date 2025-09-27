@@ -50,7 +50,6 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
       if (!token || !userId) return;
       try {
         setLoading(true);
-        // Fetch all data in parallel
         const [
           customerResponse,
           policiesResponse,
@@ -67,13 +66,11 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
           }),
         ]);
 
-        // Process customer
         if (customerResponse.ok) {
           const customerData = await customerResponse.json();
           setCustomer(customerData);
         }
 
-        // Process policies
         if (policiesResponse.ok) {
           const data = await policiesResponse.json();
           const now = new Date();
@@ -87,6 +84,14 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                 status = 'نزدیک انقضا';
               }
             }
+            let icon, color, bgColor;
+            switch (p.insurance_type) {
+              case 'ثالث': icon = Car; color = 'text-blue-600'; bgColor = 'bg-blue-100'; break;
+              case 'بدنه': icon = Shield; color = 'text-green-600'; bgColor = 'bg-green-100'; break;
+              case 'آتش‌سوزی': icon = Flame; color = 'text-red-600'; bgColor = 'bg-red-100'; break;
+              case 'حوادث': icon = User; color = 'text-yellow-600'; bgColor = 'bg-yellow-100'; break;
+              default: icon = FileText; color = 'text-gray-600'; bgColor = 'bg-gray-100';
+            }
             return {
               id: p.id,
               type: p.insurance_type,
@@ -94,7 +99,9 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
               startDate: p.start_date ? new Date(p.start_date).toLocaleDateString('fa-IR') : '',
               endDate: p.end_date ? new Date(p.end_date).toLocaleDateString('fa-IR') : '',
               status,
-              icon: p.insurance_type === 'ثالث' ? Car : p.insurance_type === 'بدنه' ? Shield : Flame,
+              icon,
+              color,
+              bgColor,
               isInstallment: p.payment_type === 'اقساطی',
               payId: p.payment_id,
             };
@@ -102,13 +109,11 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
           setInsurancePolicies(policies);
         }
 
-        // Process installments and calculate stats
         if (installmentsResponse.ok) {
           const data = await installmentsResponse.json();
           const now = moment();
           let overdueCount = 0;
           let nearExpireCount = 0;
-
           const processedInstallments = data.map((inst: any) => {
             const momentDueDate = moment(inst.due_date);
             let status = inst.status;
@@ -125,11 +130,9 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
             }
             return { ...inst, status };
           });
-
           setAllInstallments(processedInstallments);
           setStats({ overdueCount, nearExpireCount });
         }
-
       } catch (error) {
         console.error('Error fetching data:', error);
         toast.error("خطا در بارگیری اطلاعات پنل");
@@ -137,35 +140,24 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
         setLoading(false);
       }
     };
-
     fetchData();
   }, [token, userId]);
 
-
-
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'فعال':
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">فعال</Badge>;
-      case 'نزدیک انقضا':
-        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">نزدیک انقضا</Badge>;
-      case 'منقضی':
-        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">منقضی</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
+      case 'فعال': return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">فعال</Badge>;
+      case 'نزدیک انقضا': return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">نزدیک انقضا</Badge>;
+      case 'منقضی': return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">منقضی</Badge>;
+      default: return <Badge variant="secondary">{status}</Badge>;
     }
   };
 
   const getPaymentStatusBadge = (status: string) => {
     switch (status) {
-      case 'پرداخت شده':
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">پرداخت شده</Badge>;
-      case 'معوق':
-        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">معوق</Badge>;
-      case 'آینده':
-        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">آینده</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
+      case 'پرداخت شده': return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">پرداخت شده</Badge>;
+      case 'معوق': return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">معوق</Badge>;
+      case 'آینده': return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">آینده</Badge>;
+      default: return <Badge variant="secondary">{status}</Badge>;
     }
   };
 
@@ -178,10 +170,17 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
     }
   };
 
+  const handlePayLink = (link: string) => {
+    if (!link) return;
+    let absoluteUrl = link;
+    if (!/^https?:\/\//i.test(link)) {
+      absoluteUrl = `https://${link}`;
+    }
+    window.open(absoluteUrl, '_blank');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -194,7 +193,6 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                 <p className="text-sm text-gray-600">{customer?.full_name || 'کاربر'}</p>
               </div>
             </div>
-            
             <div className="flex items-center">
               <a href="tel:+989385540717">
                 <Button variant="ghost" size="sm">
@@ -212,14 +210,12 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Welcome Section */}
         <div className="mb-8">
           <h2 className="text-2xl mb-2">خوش آمدید، {customer?.full_name || 'کاربر'}</h2>
           <p className="text-gray-600">وضعیت بیمه‌نامه‌ها و اقساط خود را مشاهده کنید</p>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -231,7 +227,6 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -243,7 +238,6 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -255,7 +249,6 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -267,19 +260,13 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                         key={score}
                         className={`${
                           score === customer?.score
-                            ? score === 'A'
-                              ? 'text-green-600 font-bold text-3xl rounded-full bg-green-100 w-12 h-12 flex items-center justify-center'
-                              : score === 'B'
-                              ? 'text-blue-600 font-bold text-3xl rounded-full bg-blue-100 w-12 h-12 flex items-center justify-center'
-                              : score === 'C'
-                              ? 'text-orange-600 font-bold text-3xl rounded-full bg-orange-100 w-12 h-12 flex items-center justify-center'
-                              : 'text-red-600 font-bold text-3xl rounded-full bg-red-100 w-12 h-12 flex items-center justify-center'
-                            : score === 'A'
-                            ? 'text-green-400 font-light text-sm'
-                            : score === 'B'
-                            ? 'text-blue-400 font-light text-sm'
-                            : score === 'C'
-                            ? 'text-orange-400 font-light text-sm'
+                            ? score === 'A' ? 'text-green-600 font-bold text-3xl rounded-full bg-green-100 w-12 h-12 flex items-center justify-center'
+                            : score === 'B' ? 'text-blue-600 font-bold text-3xl rounded-full bg-blue-100 w-12 h-12 flex items-center justify-center'
+                            : score === 'C' ? 'text-orange-600 font-bold text-3xl rounded-full bg-orange-100 w-12 h-12 flex items-center justify-center'
+                            : 'text-red-600 font-bold text-3xl rounded-full bg-red-100 w-12 h-12 flex items-center justify-center'
+                            : score === 'A' ? 'text-green-400 font-light text-sm'
+                            : score === 'B' ? 'text-blue-400 font-light text-sm'
+                            : score === 'C' ? 'text-orange-400 font-light text-sm'
                             : 'text-red-400 font-light text-sm'
                         }`}
                       >
@@ -299,13 +286,10 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
           </Card>
         </div>
 
-        {/* Insurance Policies */}
         <Card className="mb-8">
           <CardHeader>
             <CardTitle>بیمه‌نامه‌های من</CardTitle>
-            <CardDescription>
-              لیست بیمه‌نامه‌های فعال و وضعیت آنها
-            </CardDescription>
+            <CardDescription>لیست بیمه‌نامه‌های فعال و وضعیت آنها</CardDescription>
           </CardHeader>
           <CardContent>
             {insurancePolicies.length === 0 ? (
@@ -336,12 +320,7 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                             <div className="flex items-center gap-1">
                               <span>{policy.payId || 'N/A'}</span>
                               {policy.payId && (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-6 w-6 p-0"
-                                  onClick={() => copyToClipboard(policy.payId!)}
-                                >
+                                <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => copyToClipboard(policy.payId!)}>
                                   <Copy className="h-3 w-3" />
                                 </Button>
                               )}
@@ -355,20 +334,12 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                             <span className="text-gray-600">انقضا:</span>
                             <span>{policy.endDate}</span>
                           </div>
-                          {policy.plateNumber && (
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">{['شخص ثالث', 'بدنه خودرو'].includes(policy.type) ? 'شماره پلاک:' : 'آدرس:'}</span>
-                              <span>{policy.plateNumber}</span>
-                            </div>
-                          )}
                         </div>
                         <div className="mt-4 flex gap-2">
                           <Button size="sm" variant="outline" className={policy.isInstallment ? "flex-1" : "w-full"} onClick={async () => {
                             try {
                               const response = await fetch(`http://localhost:3000/customer/policies/${policy.id}/download`, {
-                                headers: {
-                                  Authorization: `Bearer ${token}`,
-                                },
+                                headers: { Authorization: `Bearer ${token}` },
                               });
                               if (response.ok) {
                                 const blob = await response.blob();
@@ -406,13 +377,10 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
           </CardContent>
         </Card>
 
-        {/* All Installments Table */}
         <Card className="mb-8">
           <CardHeader>
             <CardTitle>اقساط</CardTitle>
-            <CardDescription>
-              لیست تمام اقساط پرداخت نشده
-            </CardDescription>
+            <CardDescription>لیست تمام اقساط پرداخت نشده</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -431,6 +399,7 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                   allInstallments
                     .filter(inst => inst.status !== 'پرداخت شده')
                     .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
+                    .slice(0, 5)
                     .map(installment => (
                     <TableRow key={installment.id}>
                       <TableCell>{installment.policy?.insurance_type || 'N/A'}</TableCell>
@@ -439,8 +408,8 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                       <TableCell>{new Date(installment.due_date).toLocaleDateString('fa-IR')}</TableCell>
                       <TableCell>{getPaymentStatusBadge(installment.status)}</TableCell>
                       <TableCell>
-                        {installment.pay_link && (
-                          <Button size="sm" onClick={() => window.open(installment.pay_link, '_blank')}>
+                        {installment.pay_link && installment.status !== 'پرداخت شده' && (
+                          <Button size="sm" onClick={() => handlePayLink(installment.pay_link)}>
                             پرداخت
                           </Button>
                         )}
@@ -459,14 +428,11 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
           </CardContent>
         </Card>
 
-        {/* Installments Dialog */}
         <Dialog open={showInstallmentsDialog} onOpenChange={setShowInstallmentsDialog}>
           <DialogContent className="max-w-4xl">
             <DialogHeader>
               <DialogTitle>اقساط بیمه‌نامه</DialogTitle>
-              <DialogDescription>
-                لیست اقساط بیمه‌نامه {selectedPolicy?.type}
-              </DialogDescription>
+              <DialogDescription>لیست اقساط بیمه‌نامه {selectedPolicy?.type}</DialogDescription>
             </DialogHeader>
             <div className="mt-4">
               <Table>
@@ -491,8 +457,8 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                         <TableCell>{new Date(installment.due_date).toLocaleDateString('fa-IR')}</TableCell>
                         <TableCell>{getPaymentStatusBadge(installment.status)}</TableCell>
                         <TableCell>
-                          {installment.pay_link && (
-                            <Button size="sm" onClick={() => window.open(installment.pay_link, '_blank')}>
+                          {installment.pay_link && installment.status !== 'پرداخت شده' && (
+                            <Button size="sm" onClick={() => handlePayLink(installment.pay_link)}>
                               پرداخت
                             </Button>
                           )}
@@ -511,7 +477,6 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
             </div>
           </DialogContent>
         </Dialog>
-
       </div>
     </div>
   );

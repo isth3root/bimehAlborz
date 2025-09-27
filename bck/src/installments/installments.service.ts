@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan, Between, Not } from 'typeorm';
+import { Repository, LessThan } from 'typeorm';
 import { Installment } from '../entities/installment.entity';
 
 @Injectable()
@@ -12,19 +12,6 @@ export class InstallmentsService {
 
   findAll(): Promise<Installment[]> {
     return this.installmentRepository.find({ relations: ['customer', 'policy'] });
-  }
-
-  async findAllForCustomer(nationalCode: string): Promise<Installment[]> {
-    return this.installmentRepository
-      .createQueryBuilder('installment')
-      .leftJoinAndSelect('installment.customer', 'customer')
-      .leftJoinAndSelect('installment.policy', 'policy')
-      .where('customer.national_code = :nationalCode', { nationalCode })
-      .getMany();
-  }
-
-  findByPolicyId(policyId: number): Promise<Installment[]> {
-    return this.installmentRepository.find({ where: { policy_id: policyId } });
   }
 
   findOne(id: number): Promise<Installment | null> {
@@ -49,4 +36,14 @@ export class InstallmentsService {
     await this.installmentRepository.delete({ policy_id: policyId });
   }
 
+  async getOverdueCount(): Promise<number> {
+    const now = new Date();
+    const count = await this.installmentRepository.count({
+      where: {
+        status: 'معوق',
+        due_date: LessThan(now),
+      },
+    });
+    return count;
+  }
 }
