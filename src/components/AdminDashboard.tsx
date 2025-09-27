@@ -152,6 +152,7 @@ interface Policy {
   payId?: string;
   installmentsCount?: number;
   pdfFile?: File | null;
+  customerNationalCode?: string;
 }
 
 interface Installment {
@@ -317,6 +318,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       setPolicies(data.map((p: any) => ({
         id: p.id.toString(),
         customerName: p.customer ? p.customer.full_name : 'Unknown',
+        customerNationalCode: p.customer_national_code,
         type: p.insurance_type,
         vehicle: p.details,
         startDate: p.start_date ? new Date(p.start_date).toLocaleDateString('fa-IR') : '',
@@ -380,43 +382,58 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     }
   }, [token, onLogout]);
 
-  useEffect(() => {
-    const fetchInstallments = async () => {
-      try {
-        const response = await fetch('http://localhost:3000/installments/admin', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (response.ok) {
-          const data = await response.json();
-          const processedInstallments = data.map((i: any) => {
-            const dueDate = new Date(i.due_date);
-            const now = new Date();
-            const daysOverdue = dueDate < now ? Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
-            return {
-              id: i.id.toString(),
-              customerName: i.customer ? i.customer.full_name : 'Unknown',
-              policyType: i.policy ? i.policy.insurance_type : 'Unknown',
-              amount: i.amount.toString(),
-              dueDate: dueDate.toLocaleDateString('fa-IR'),
-              status: i.status || 'معوق',
-              daysOverdue,
-              payLink: i.pay_link || '',
-              customerNationalCode: i.customer ? i.customer.national_code : '',
-            };
-          });
-          setInstallments(processedInstallments);
-        } else {
-          console.error('Failed to fetch installments:', response.status, response.statusText);
-        }
-      } catch (error) {
-        console.error('Error fetching installments:', error);
-      }
-    };
+  const refetchAndProcessInstallments = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/installments/admin', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const now = moment();
+        const processedInstallments = data.map((i: any) => {
+          const dueDate = new Date(i.due_date);
+          const momentDueDate = moment(dueDate);
+          const daysOverdue = momentDueDate.isBefore(now, 'day') ? now.diff(momentDueDate, 'days') : 0;
 
+          let status = i.status;
+          if (status !== 'پرداخت شده') {
+            if (momentDueDate.isBefore(now, 'day')) {
+              status = 'معوق';
+            } else if (momentDueDate.diff(now, 'days') <= 30) {
+              status = 'نزدیک انقضا';
+            } else {
+              status = 'آینده';
+            }
+          }
+
+          return {
+            id: i.id.toString(),
+            customerName: i.customer ? i.customer.full_name : 'Unknown',
+            policyType: i.policy ? i.policy.insurance_type : 'Unknown',
+            amount: i.amount.toString(),
+            dueDate: moment(dueDate).format('jYYYY/jMM/jDD'),
+            status: status,
+            daysOverdue,
+            payLink: i.pay_link || '',
+            customerNationalCode: i.customer ? i.customer.national_code : '',
+          };
+        });
+        setInstallments(processedInstallments);
+      } else {
+        console.error('Failed to fetch installments:', response.status, response.statusText);
+        toast.error('خطا در بارگیری اقساط');
+      }
+    } catch (error) {
+      console.error('Error fetching installments:', error);
+      toast.error('خطا در بارگیری اقساط');
+    }
+  };
+
+  useEffect(() => {
     if (token && customers.length > 0 && policies.length > 0) {
-      fetchInstallments();
+      refetchAndProcessInstallments();
     }
   }, [token, customers, policies]);
 
@@ -432,24 +449,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           return { ...policy, status: "نزدیک انقضا" };
         } else {
           return { ...policy, status: "فعال" };
-        }
-      })
-    );
-  }, []);
-
-  // Update installment statuses based on due dates
-  useEffect(() => {
-    const now = moment();
-    setInstallments(prevInstallments =>
-      prevInstallments.map(installment => {
-        if (installment.status === "پرداخت شده") return installment; // Don't change paid installments
-        const dueDate = moment(installment.dueDate, "jYYYY/jMM/jDD");
-        if (dueDate.isBefore(now)) {
-          return { ...installment, status: "معوق" };
-        } else if (dueDate.diff(now, 'days') <= 30) {
-          return { ...installment, status: "نزدیک انقضا" };
-        } else {
-          return { ...installment, status: "آینده" };
         }
       })
     );
@@ -654,29 +653,29 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       return;
     }
     try {
-      const formData = new FormData();
-      formData.append('customer_id', formDataPolicy.customerNationalCode); // Assuming nationalCode is the id, but wait, customer_id is int, nationalCode is string.
-      // Need to find customer by nationalCode to get id.
       const customer = customers.find(c => c.nationalCode === formDataPolicy.customerNationalCode);
-      if (!customer) {
-        toast.error("مشتری یافت نشد.");
+      if (!customer || !customer.id) {
+        toast.error("مشتری معتبر یافت نشد.");
         return;
       }
-      if (!customer.id || isNaN(parseInt(customer.id))) {
-        toast.error("شناسه مشتری نامعتبر.");
-        return;
-      }
+
+      const formData = new FormData();
+      formData.append('customer_id', customer.id);
       formData.append('customer_national_code', formDataPolicy.customerNationalCode);
       formData.append('insurance_type', formDataPolicy.type);
       formData.append('details', formDataPolicy.vehicle);
       formData.append('start_date', moment(formDataPolicy.startDate, "jYYYY/jMM/jDD").format("YYYY-MM-DD"));
-      formData.append('end_date', moment(formDataPolicy.endDate, "jYYYY/jMM/jDD").format("YYYY-MM-DD"));
+
+      // Set end_date to the first day of the month
+      const endDate = moment(formDataPolicy.endDate, "jYYYY/jMM/jDD").startOf('jMonth').format("YYYY-MM-DD");
+      formData.append('end_date', endDate);
+
       formData.append('premium', formDataPolicy.premium.replace(/,/g, ''));
       formData.append('payment_type', formDataPolicy.paymentType);
       formData.append('installment_count', formDataPolicy.installmentsCount.toString());
       formData.append('payment_id', formDataPolicy.payId);
       if (formDataPolicy.pdfFile) {
-        formData.append('pdf', formDataPolicy.pdfFile);
+        formData.append('pdf', formDataPolicy.pdfFile, formDataPolicy.pdfFile.name);
       }
 
       const response = await fetch('http://localhost:3000/admin/policies', {
@@ -686,22 +685,62 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         },
         body: formData,
       });
+
       if (response.ok) {
         const newPolicy = await response.json();
+        const customerName = customers.find(c => c.id === newPolicy.customer_id)?.name || 'Unknown';
+
         setPolicies([...policies, {
           id: newPolicy.id.toString(),
-          customerName: formDataPolicy.customerName,
+          customerName: customerName,
           type: newPolicy.insurance_type,
           vehicle: newPolicy.details,
-          startDate: formDataPolicy.startDate,
-          endDate: formDataPolicy.endDate,
+          startDate: new Date(newPolicy.start_date).toLocaleDateString('fa-IR'),
+          endDate: new Date(newPolicy.end_date).toLocaleDateString('fa-IR'),
           premium: newPolicy.premium.toString(),
-          status: 'فعال',
+          status: 'فعال', // Will be recalculated by useEffect
           paymentType: newPolicy.payment_type,
           payId: newPolicy.payment_id,
           installmentsCount: newPolicy.installment_count,
           pdfFile: null,
         }]);
+
+        // Refetch installments to include newly created ones
+        const fetchInstallments = async () => {
+          try {
+            const response = await fetch('http://localhost:3000/installments/admin', {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+            if (response.ok) {
+              const data = await response.json();
+              const processedInstallments = data.map((i: any) => {
+                const dueDate = new Date(i.due_date);
+                const now = new Date();
+                const daysOverdue = dueDate < now ? Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+                return {
+                  id: i.id.toString(),
+                  customerName: i.customer ? i.customer.full_name : 'Unknown',
+                  policyType: i.policy ? i.policy.insurance_type : 'Unknown',
+                  amount: i.amount.toString(),
+                  dueDate: dueDate.toLocaleDateString('fa-IR'),
+                  status: i.status || 'معوق',
+                  daysOverdue,
+                  payLink: i.pay_link || '',
+                  customerNationalCode: i.customer ? i.customer.national_code : '',
+                };
+              });
+              setInstallments(processedInstallments);
+            } else {
+              console.error('Failed to fetch installments:', response.status, response.statusText);
+            }
+          } catch (error) {
+            console.error('Error fetching installments:', error);
+          }
+        };
+        fetchInstallments();
+
         toast.success("بیمه‌نامه با موفقیت اضافه شد.");
         setFormDataPolicy({
           customerName: "",
@@ -719,7 +758,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         });
         setShowAddPolicyForm(false);
       } else {
-        toast.error('خطا در افزودن بیمه‌نامه');
+        const errorData = await response.json();
+        toast.error(`خطا در افزودن بیمه‌نامه: ${errorData.message || 'خطای سرور'}`);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -730,6 +770,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const handleEditPolicy = async () => {
     if (!editingPolicy) return;
     try {
+      const endDate = moment(formDataPolicy.endDate, "jYYYY/jMM/jDD").startOf('jMonth').format("YYYY-MM-DD");
       const response = await fetch(`http://localhost:3000/admin/policies/${editingPolicy.id}`, {
         method: 'PUT',
         headers: {
@@ -741,7 +782,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           insurance_type: formDataPolicy.type,
           details: formDataPolicy.vehicle,
           start_date: moment(formDataPolicy.startDate, "jYYYY/jMM/jDD").format("YYYY-MM-DD"),
-          end_date: moment(formDataPolicy.endDate, "jYYYY/jMM/jDD").format("YYYY-MM-DD"),
+          end_date: endDate,
           premium: formDataPolicy.premium.replace(/,/g, ''),
           payment_type: formDataPolicy.paymentType,
           installment_count: formDataPolicy.installmentsCount,
@@ -756,10 +797,11 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
               ? {
                   ...p,
                   customerName: formDataPolicy.customerName,
+                  customerNationalCode: updatedPolicy.customer_national_code,
                   type: updatedPolicy.insurance_type,
                   vehicle: updatedPolicy.details,
-                  startDate: formDataPolicy.startDate,
-                  endDate: formDataPolicy.endDate,
+                  startDate: new Date(updatedPolicy.start_date).toLocaleDateString('fa-IR'),
+                  endDate: new Date(updatedPolicy.end_date).toLocaleDateString('fa-IR'),
                   premium: updatedPolicy.premium.toString(),
                   paymentType: updatedPolicy.payment_type,
                   payId: updatedPolicy.payment_id,
@@ -805,7 +847,9 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       });
       if (response.ok) {
         setPolicies(policies.filter((p) => p.id !== deletePolicy.id));
+        await refetchAndProcessInstallments(); // Refetch installments
         setDeletePolicy(null);
+        toast.success("بیمه‌نامه با موفقیت حذف شد.");
       } else {
         toast.error('خطا در حذف بیمه‌نامه');
       }
@@ -819,7 +863,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     setEditingPolicy(policy);
     setFormDataPolicy({
       customerName: policy.customerName,
-      customerNationalCode: "",
+      customerNationalCode: policy.customerNationalCode || "",
       type: policy.type,
       vehicle: policy.vehicle,
       startDate: policy.startDate,
@@ -834,41 +878,9 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     setShowAddPolicyForm(true);
   };
 
-  const handleAddInstallment = () => {
-    if (!formDataInstallment.customerName.trim() || !formDataInstallment.policyType.trim() || !formDataInstallment.amount.trim() || !formDataInstallment.dueDate.trim()) {
-      alert("لطفا تمام فیلدهای مورد نیاز را پر کنید.");
-      return;
-    }
-    const newInstallment: Installment = {
-      id: Date.now().toString(),
-      ...formDataInstallment,
-      status: "معوق",
-      daysOverdue: 0,
-    };
-    setInstallments([...installments, newInstallment]);
-    setFormDataInstallment({
-      customerName: "",
-      customerNationalCode: "",
-      policyType: "",
-      amount: "",
-      dueDate: "",
-      payLink: "",
-      status: "معوق",
-    });
-    setShowAddInstallmentForm(false);
-  };
-
   const handleEditInstallment = async () => {
     if (!editingInstallment) return;
     try {
-      // Find the original installment to get policy_id and customer_id
-      const originalInstallment = installments.find(i => i.id === editingInstallment.id);
-      if (!originalInstallment) {
-        toast.error('قسط مورد نظر یافت نشد');
-        return;
-      }
-
-      // Prepare the update data according to backend entity structure
       const updateData: any = {
         amount: parseFloat(formDataInstallment.amount.replace(/,/g, '')),
         due_date: moment(formDataInstallment.dueDate, "jYYYY/jMM/jDD").format("YYYY-MM-DD"),
@@ -886,27 +898,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       });
       
       if (response.ok) {
-        const updatedInstallment = await response.json();
-        
-        // Update local state with the response
-        setInstallments(
-          installments.map((i) =>
-            i.id === editingInstallment.id
-              ? {
-                  ...i,
-                  amount: formDataInstallment.amount,
-                  dueDate: formDataInstallment.dueDate,
-                  payLink: formDataInstallment.payLink,
-                  status: formDataInstallment.status,
-                  // Keep the original customer and policy info
-                  customerName: i.customerName,
-                  customerNationalCode: i.customerNationalCode,
-                  policyType: i.policyType,
-                }
-              : i
-          )
-        );
-        
+        await refetchAndProcessInstallments(); // Refetch to get updated status
         toast.success("قسط با موفقیت بروزرسانی شد.");
         setFormDataInstallment({
           customerName: "",
@@ -930,10 +922,26 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     }
   };
 
-  const handleDeleteInstallment = () => {
+  const handleDeleteInstallment = async () => {
     if (!deleteInstallment) return;
-    setInstallments(installments.filter((i) => i.id !== deleteInstallment.id));
-    setDeleteInstallment(null);
+    try {
+      const response = await fetch(`http://localhost:3000/installments/${deleteInstallment.id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        setInstallments(installments.filter((i) => i.id !== deleteInstallment.id));
+        setDeleteInstallment(null);
+        toast.success("قسط با موفقیت حذف شد.");
+      } else {
+        toast.error('خطا در حذف قسط');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('خطا در حذف قسط');
+    }
   };
 
   const openEditInstallmentDialog = (installment: Installment) => {
@@ -1868,8 +1876,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <div className="flex items-center justify-between">
                   <CardTitle>مدیریت اقساط</CardTitle>
                   <Button
-                    onClick={() => setShowAddInstallmentForm((prev) => !prev)}
-                    variant={showAddInstallmentForm ? "outline" : "default"}
+                    onClick={() => toast.info("اقساط به طور خودکار با ایجاد بیمه‌نامه اقساطی اضافه می‌شوند.")}
                   >
                     <Plus className="h-4 w-4 ml-2" />
                     افزودن قسط
