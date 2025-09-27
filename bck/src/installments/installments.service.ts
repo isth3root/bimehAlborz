@@ -14,6 +14,13 @@ export class InstallmentsService {
     return this.installmentRepository.find({ relations: ['customer', 'policy'] });
   }
 
+  findAllForCustomer(nationalCode: string): Promise<Installment[]> {
+    return this.installmentRepository.find({
+      where: { customer: { national_code: nationalCode } },
+      relations: ['customer', 'policy'],
+    });
+  }
+
   findOne(id: number): Promise<Installment | null> {
     return this.installmentRepository.findOne({ where: { id }, relations: ['customer', 'policy'] });
   }
@@ -53,6 +60,31 @@ export class InstallmentsService {
 
     return this.installmentRepository.count({
       where: {
+        due_date: Between(now, thirtyDaysFromNow),
+        status: Not('پرداخت شده'),
+      },
+    });
+  }
+
+  async getOverdueCountForCustomer(nationalCode: string): Promise<number> {
+    const now = new Date();
+    return this.installmentRepository.count({
+      where: {
+        customer: { national_code: nationalCode },
+        due_date: LessThan(now),
+        status: Not('پرداخت شده'),
+      },
+    });
+  }
+
+  async getNearExpireCountForCustomer(nationalCode: string): Promise<number> {
+    const now = new Date();
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(now.getDate() + 30);
+
+    return this.installmentRepository.count({
+      where: {
+        customer: { national_code: nationalCode },
         due_date: Between(now, thirtyDaysFromNow),
         status: Not('پرداخت شده'),
       },

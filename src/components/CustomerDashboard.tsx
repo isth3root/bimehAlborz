@@ -31,7 +31,12 @@ interface CustomerDashboardProps {
 
 export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
   const [insurancePolicies, setInsurancePolicies] = useState<any[]>([]);
+  const [allInstallments, setAllInstallments] = useState<any[]>([]);
   const [customer, setCustomer] = useState<any>(null);
+  const [stats, setStats] = useState({
+    overdueCount: 0,
+    nearExpireCount: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
   const [showInstallmentsDialog, setShowInstallmentsDialog] = useState(false);
@@ -41,24 +46,41 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!token || !userId) return;
       try {
-        // Fetch customer info
-        const customerResponse = await fetch(`http://localhost:3000/admin/customers/by-national/${userId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        setLoading(true);
+        // Fetch all data in parallel
+        const [
+          customerResponse,
+          policiesResponse,
+          installmentsResponse,
+          overdueCountResponse,
+          nearExpireCountResponse,
+        ] = await Promise.all([
+          fetch(`http://localhost:3000/admin/customers/by-national/${userId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`http://localhost:3000/customer/policies`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`http://localhost:3000/installments/customer`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`http://localhost:3000/installments/customer/overdue/count`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`http://localhost:3000/installments/customer/near-expire/count`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+
+        // Process customer
         if (customerResponse.ok) {
           const customerData = await customerResponse.json();
           setCustomer(customerData);
         }
 
-        // Fetch policies
-        const policiesResponse = await fetch(`http://localhost:3000/customer/policies`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        // Process policies
         if (policiesResponse.ok) {
           const data = await policiesResponse.json();
           const now = new Date();
@@ -73,35 +95,40 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
               }
             }
             return {
-              id: p.id.toString(),
+              id: p.id,
               type: p.insurance_type,
               vehicle: p.details,
-              plateNumber: '',
               startDate: p.start_date ? new Date(p.start_date).toLocaleDateString('fa-IR') : '',
               endDate: p.end_date ? new Date(p.end_date).toLocaleDateString('fa-IR') : '',
-              originalStartDate: p.start_date ? new Date(p.start_date) : new Date(),
               status,
               icon: p.insurance_type === 'ثالث' ? Car : p.insurance_type === 'بدنه' ? Shield : Flame,
-              color: 'text-blue-600',
-              bgColor: 'bg-blue-50',
               isInstallment: p.payment_type === 'اقساطی',
               payId: p.payment_id,
-              premium: p.premium,
-              installment_count: p.installment_count,
             };
           });
           setInsurancePolicies(policies);
         }
+
+        // Process installments
+        if (installmentsResponse.ok) {
+          const data = await installmentsResponse.json();
+          setAllInstallments(data);
+        }
+
+        // Process stats
+        const overdueCount = overdueCountResponse.ok ? await overdueCountResponse.json() : 0;
+        const nearExpireCount = nearExpireCountResponse.ok ? await nearExpireCount.json() : 0;
+        setStats({ overdueCount, nearExpireCount });
+
       } catch (error) {
         console.error('Error fetching data:', error);
+        toast.error("خطا در بارگیری اطلاعات پنل");
       } finally {
         setLoading(false);
       }
     };
 
-    if (token && userId) {
-      fetchData();
-    }
+    fetchData();
   }, [token, userId]);
 
 
@@ -141,29 +168,6 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
     }
   };
 
-  const generateInstallments = (policy: any) => {
-    const installments = [];
-    const installmentAmount = policy.premium / policy.installment_count;
-    const startDate = policy.originalStartDate;
-    const now = new Date();
-    for (let i = 1; i <= policy.installment_count; i++) {
-      const dueDate = new Date(startDate);
-      dueDate.setMonth(startDate.getMonth() + i - 1);
-      let status = 'آینده';
-      if (dueDate < now) {
-        status = 'معوق';
-      } else if ((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30) <= 1) {
-        status = 'نزدیک انقضا';
-      }
-      installments.push({
-        number: i,
-        amount: installmentAmount,
-        dueDate: dueDate.toLocaleDateString('fa-IR'),
-        status,
-      });
-    }
-    return installments;
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -222,8 +226,8 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">معوق</p>
-                  <p className="text-2xl text-red-600">{insurancePolicies.filter(p => p.status === 'منقضی').length}</p>
+                  <p className="text-sm text-gray-600">اقساط معوق</p>
+                  <p className="text-2xl text-red-600">{stats.overdueCount}</p>
                 </div>
                 <CreditCard className="h-8 w-8 text-red-600" />
               </div>
@@ -234,8 +238,8 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">نزدیک انقضا</p>
-                  <p className="text-2xl text-yellow-600">{insurancePolicies.filter(p => p.status === 'نزدیک انقضا').length}</p>
+                  <p className="text-sm text-gray-600">اقساط نزدیک سررسید</p>
+                  <p className="text-2xl text-yellow-600">{stats.nearExpireCount}</p>
                 </div>
                 <Calendar className="h-8 w-8 text-yellow-600" />
               </div>
@@ -397,7 +401,7 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
           <CardHeader>
             <CardTitle>اقساط</CardTitle>
             <CardDescription>
-              لیست تمام اقساط بیمه‌نامه‌ها
+              لیست تمام اقساط پرداخت نشده
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -412,18 +416,15 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {insurancePolicies.filter(p => p.isInstallment).flatMap(policy =>
-                  generateInstallments(policy).map(installment => ({
-                    ...installment,
-                    policyType: policy.type,
-                    dueDateObj: new Date(policy.originalStartDate.getFullYear(), policy.originalStartDate.getMonth() + installment.number - 1, policy.originalStartDate.getDate()),
-                  }))
-                ).sort((a, b) => a.dueDateObj.getTime() - b.dueDateObj.getTime()).map(installment => (
-                  <TableRow key={`${installment.policyType}-${installment.number}`}>
-                    <TableCell>{installment.policyType}</TableCell>
-                    <TableCell>{installment.number}</TableCell>
-                    <TableCell>{installment.amount.toLocaleString('fa-IR')} تومان</TableCell>
-                    <TableCell>{installment.dueDate}</TableCell>
+                {allInstallments
+                  .filter(inst => inst.status !== 'پرداخت شده')
+                  .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
+                  .map(installment => (
+                  <TableRow key={installment.id}>
+                    <TableCell>{installment.policy?.insurance_type || 'N/A'}</TableCell>
+                    <TableCell>{installment.installment_number}</TableCell>
+                    <TableCell>{parseFloat(installment.amount).toLocaleString('fa-IR')} ریال</TableCell>
+                    <TableCell>{new Date(installment.due_date).toLocaleDateString('fa-IR')}</TableCell>
                     <TableCell>{getPaymentStatusBadge(installment.status)}</TableCell>
                   </TableRow>
                 ))}
@@ -452,11 +453,14 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {selectedPolicy && generateInstallments(selectedPolicy).map((installment) => (
-                    <TableRow key={installment.number}>
-                      <TableCell>{installment.number}</TableCell>
-                      <TableCell>{installment.amount.toLocaleString('fa-IR')} تومان</TableCell>
-                      <TableCell>{installment.dueDate}</TableCell>
+                  {selectedPolicy && allInstallments
+                    .filter(inst => inst.policy_id === selectedPolicy.id)
+                    .sort((a, b) => a.installment_number - b.installment_number)
+                    .map((installment) => (
+                    <TableRow key={installment.id}>
+                      <TableCell>{installment.installment_number}</TableCell>
+                      <TableCell>{parseFloat(installment.amount).toLocaleString('fa-IR')} ریال</TableCell>
+                      <TableCell>{new Date(installment.due_date).toLocaleDateString('fa-IR')}</TableCell>
                       <TableCell>{getPaymentStatusBadge(installment.status)}</TableCell>
                     </TableRow>
                   ))}

@@ -26,6 +26,24 @@ export class InstallmentsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('customer')
+  findAllForCustomer(@Request() req): Promise<Installment[]> {
+    return this.installmentsService.findAllForCustomer(req.user.username);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('customer/overdue/count')
+  getOverdueCountForCustomer(@Request() req): Promise<number> {
+    return this.installmentsService.getOverdueCountForCustomer(req.user.username);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('customer/near-expire/count')
+  getNearExpireCountForCustomer(@Request() req): Promise<number> {
+    return this.installmentsService.getNearExpireCountForCustomer(req.user.username);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string): Promise<Installment | null> {
     return this.installmentsService.findOne(+id);
