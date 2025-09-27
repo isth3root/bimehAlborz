@@ -178,6 +178,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     customersCount: 0,
     policiesCount: 0,
     overdueInstallmentsCount: 0,
+    nearExpireInstallmentsCount: 0,
   });
 
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -362,10 +363,18 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       });
       const overdueInstallmentsCount = overdueResponse.ok ? await overdueResponse.json() : 0;
 
+      const nearExpireResponse = await fetch('http://localhost:3000/installments/near-expire/count', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const nearExpireInstallmentsCount = nearExpireResponse.ok ? await nearExpireResponse.json() : 0;
+
       setStats({
         customersCount,
         policiesCount,
         overdueInstallmentsCount,
+        nearExpireInstallmentsCount,
       });
     } catch (error) {
       console.error('Error fetching policies:', error);
@@ -458,8 +467,14 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     { customers: 0, policies: 1, installments: 2, blogs: 3 }[activeTab] || 0;
 
   const formatPrice = (price: string) => {
-    const numeric = price.replace(/[^\d]/g, "");
-    const formatted = numeric.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    // The value from backend might be a decimal string like "10000000.00"
+    const numericValue = parseFloat(price);
+    if (isNaN(numericValue)) {
+      return "0 ریال";
+    }
+    // Round to nearest integer to remove decimal part
+    const integerValue = Math.round(numericValue);
+    const formatted = integerValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     return `${formatted} ریال`;
   };
 
@@ -688,11 +703,10 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
       if (response.ok) {
         const newPolicy = await response.json();
-        const customerName = customers.find(c => c.id === newPolicy.customer_id)?.name || 'Unknown';
 
         setPolicies([...policies, {
           id: newPolicy.id.toString(),
-          customerName: customerName,
+          customerName: newPolicy.customer ? newPolicy.customer.full_name : 'Unknown',
           type: newPolicy.insurance_type,
           vehicle: newPolicy.details,
           startDate: new Date(newPolicy.start_date).toLocaleDateString('fa-IR'),
@@ -1124,6 +1138,19 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-2">اقساط نزدیک سررسید</p>
+                  <p className="text-3xl text-yellow-600">{stats.nearExpireInstallmentsCount}</p>
+                  <p className="text-sm text-green-600 mt-1">آمار به‌روز</p>
+                </div>
+                <CreditCard className="h-8 w-8 text-yellow-600" />
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">

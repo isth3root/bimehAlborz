@@ -20,6 +20,12 @@ export class InstallmentsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('near-expire/count')
+  getNearExpireCount(): Promise<number> {
+    return this.installmentsService.getNearExpireCount();
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string): Promise<Installment | null> {
     return this.installmentsService.findOne(+id);

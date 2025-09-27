@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan } from 'typeorm';
+import { Repository, LessThan, Between, Not } from 'typeorm';
 import { Installment } from '../entities/installment.entity';
 
 @Injectable()
@@ -38,12 +38,24 @@ export class InstallmentsService {
 
   async getOverdueCount(): Promise<number> {
     const now = new Date();
-    const count = await this.installmentRepository.count({
+    return this.installmentRepository.count({
       where: {
-        status: 'معوق',
         due_date: LessThan(now),
+        status: Not('پرداخت شده'),
       },
     });
-    return count;
+  }
+
+  async getNearExpireCount(): Promise<number> {
+    const now = new Date();
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(now.getDate() + 30);
+
+    return this.installmentRepository.count({
+      where: {
+        due_date: Between(now, thirtyDaysFromNow),
+        status: Not('پرداخت شده'),
+      },
+    });
   }
 }
