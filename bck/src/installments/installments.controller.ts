@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, Req } from '@nestjs/common';
 import { InstallmentsService } from './installments.service';
 import { Installment } from '../entities/installment.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -27,19 +27,19 @@ export class InstallmentsController {
 
   @UseGuards(JwtAuthGuard)
   @Get('customer')
-  findAllForCustomer(@Request() req): Promise<Installment[]> {
+  findAllForCustomer(@Req() req): Promise<Installment[]> {
     return this.installmentsService.findAllForCustomer(req.user.username);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('customer/overdue/count')
-  getOverdueCountForCustomer(@Request() req): Promise<number> {
+  getOverdueCountForCustomer(@Req() req): Promise<number> {
     return this.installmentsService.getOverdueCountForCustomer(req.user.username);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('customer/near-expire/count')
-  getNearExpireCountForCustomer(@Request() req): Promise<number> {
+  getNearExpireCountForCustomer(@Req() req): Promise<number> {
     return this.installmentsService.getNearExpireCountForCustomer(req.user.username);
   }
 
