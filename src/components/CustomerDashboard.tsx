@@ -104,18 +104,18 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
         // Process installments and calculate stats
         if (installmentsResponse.ok) {
           const data = await installmentsResponse.json();
-          const now = new Date();
+          const now = moment();
           let overdueCount = 0;
           let nearExpireCount = 0;
 
           const processedInstallments = data.map((inst: any) => {
+            const momentDueDate = moment(inst.due_date);
             let status = inst.status;
             if (status !== 'پرداخت شده') {
-              const dueDate = new Date(inst.due_date);
-              if (dueDate < now) {
+              if (momentDueDate.isBefore(now, 'day')) {
                 status = 'معوق';
                 overdueCount++;
-              } else if ((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24) <= 30) {
+              } else if (momentDueDate.isSameOrBefore(moment(now).add(1, 'jMonth'))) {
                 status = 'نزدیک انقضا';
                 nearExpireCount++;
               } else {

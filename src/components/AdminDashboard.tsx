@@ -392,8 +392,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         let nearExpireCount = 0;
 
         const processedInstallments = data.map((i: any) => {
-          const dueDate = new Date(i.due_date);
-          const momentDueDate = moment(dueDate);
+          const momentDueDate = moment(i.due_date); // The date from backend is in ISO format
           const daysOverdue = momentDueDate.isBefore(now, 'day') ? now.diff(momentDueDate, 'days') : 0;
 
           let status = i.status;
@@ -401,7 +400,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             if (momentDueDate.isBefore(now, 'day')) {
               status = 'معوق';
               overdueCount++;
-            } else if (momentDueDate.diff(now, 'days') <= 30) {
+            } else if (momentDueDate.isSameOrBefore(moment(now).add(1, 'jMonth'))) {
               status = 'نزدیک انقضا';
               nearExpireCount++;
             } else {
@@ -414,7 +413,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             customerName: i.customer ? i.customer.full_name : 'Unknown',
             policyType: i.policy ? i.policy.insurance_type : 'Unknown',
             amount: i.amount.toString(),
-            dueDate: moment(dueDate).format('jYYYY/jMM/jDD'),
+            dueDate: momentDueDate.format('jYYYY/jMM/jDD'),
             status: status,
             daysOverdue,
             payLink: i.pay_link || '',
