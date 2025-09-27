@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { ArrowRight } from "lucide-react";
+import { toast } from "sonner";
 
 interface LoginPageProps {
   onLogin: (userType: 'customer' | 'admin') => void;
@@ -18,17 +19,35 @@ export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Simulate login process
-    setTimeout(() => {
-      // Demo logic: admin login with specific credentials
-      if (nationalCode === '0000000000' && insuranceCode === 'admin') {
-        onLogin('admin');
+
+    try {
+      const response = await fetch('http://localhost:3000/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: nationalCode,
+          password: insuranceCode,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('token', data.access_token);
+        localStorage.setItem('userId', data.username);
+        localStorage.setItem('role', data.role);
+        toast.success('ورود موفق');
+        onLogin(data.role);
       } else {
-        onLogin('customer');
+        toast.error('اطلاعات ورود نامعتبر است');
       }
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('ورود ناموفق');
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -54,11 +73,11 @@ export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="nationalCode">کد ملی</Label>
+                <Label htmlFor="nationalCode">نام کاربری</Label>
                 <Input
                   id="nationalCode"
                   type="text"
-                  placeholder="کد ملی ۱۰ رقمی"
+                  placeholder="نام کاربری"
                   value={nationalCode}
                   onChange={(e) => setNationalCode(e.target.value)}
                   maxLength={10}
@@ -68,11 +87,11 @@ export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="insuranceCode">کد بیمه‌گذار</Label>
+                <Label htmlFor="insuranceCode">رمزعبور</Label>
                 <Input
                   id="insuranceCode"
-                  type="text"
-                  placeholder="کد بیمه‌گذار"
+                  type="password"
+                  placeholder="رمزعبور"
                   value={insuranceCode}
                   onChange={(e) => setInsuranceCode(e.target.value)}
                   required

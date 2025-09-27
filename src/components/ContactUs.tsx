@@ -32,8 +32,7 @@ export function ContactUs() {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold mb-2">تلفن</h3>
-                    <p className="text-gray-600">۰۲۱-۱۲۳۴۵۶۷۸</p>
-                    <p className="text-gray-600">۰۹۱۲۳۴۵۶۷۸۹</p>
+                    <p className="text-gray-600">09385540717</p>
                   </div>
                 </div>
 
@@ -44,8 +43,7 @@ export function ContactUs() {
                   <div>
                     <h3 className="text-lg font-semibold mb-2">آدرس</h3>
                     <p className="text-gray-600">
-                      تهران، خیابان ولیعصر، پلاک ۱۲۳<br />
-                      ساختمان بیمه البرز، طبقه ۵
+                      اهواز امانیه خیابان سقراط شرقی مجتمع گلاریس طبقه ۳ واحد ۱۱
                     </p>
                   </div>
                 </div>
@@ -95,7 +93,7 @@ export function ContactUs() {
           <h2 className="text-3xl font-bold text-center mb-8">موقعیت ما روی نقشه</h2>
           <div className="h-96 rounded-lg overflow-hidden">
             <iframe
-              src="https://maps.google.com/maps?q=35.7298524496717,51.377519966423876&output=embed"
+              src="https://maps.google.com/maps?q=31.3204177,48.6673714&output=embed"
               width="100%"
               height="100%"
               style={{ border: 0 }}

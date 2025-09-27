@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -48,32 +48,40 @@ import {
   LogOut,
   Calendar,
 } from "lucide-react";
+import { toast } from "sonner";
 import { DatePicker } from "zaman";
 import moment from "moment-jalaali";
 
 
 // Client-only Persian date picker component using zaman
-const ClientOnlyDatePicker = ({
-  value,
-  onChange,
-  placeholder,
-  id,
-}: {
+const ClientOnlyDatePicker = React.forwardRef<HTMLDivElement, {
   value: string;
   onChange: (date: string) => void;
   placeholder: string;
   id?: string;
-}) => {
+}>(({
+  value,
+  onChange,
+  placeholder,
+  id,
+}, ref) => {
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  // Convert Persian numbers to English
+  const persianToEnglish = (str: string): string => {
+    const persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+    return str.replace(/[۰-۹]/g, (char) => persianNumbers.indexOf(char).toString());
+  };
+
   // Convert Persian date string to Date object
   const parsePersianDate = (dateStr: string): Date | undefined => {
     if (!dateStr) return undefined;
-    const m = moment(dateStr, "jYYYY/jMM/jDD");
+    const englishDateStr = persianToEnglish(dateStr);
+    const m = moment(englishDateStr, "jYYYY/jMM/jDD");
     return m.isValid() ? m.toDate() : undefined;
   };
 
@@ -89,7 +97,7 @@ const ClientOnlyDatePicker = ({
 
   if (!isClient) {
     return (
-      <div id={id} className="flex items-center gap-2 border rounded-md px-3 py-2 text-sm bg-white">
+      <div ref={ref} id={id} className="flex items-center gap-2 border rounded-md px-3 py-2 text-sm bg-white">
         <Calendar className="h-4 w-4 text-gray-400" />
         <span>{placeholder}</span>
       </div>
@@ -97,7 +105,7 @@ const ClientOnlyDatePicker = ({
   }
 
   return (
-    <div id={id}>
+    <div ref={ref} id={id}>
       <DatePicker
         defaultValue={parsePersianDate(value)}
         onChange={handleDateChange}
@@ -110,7 +118,7 @@ const ClientOnlyDatePicker = ({
       />
     </div>
   );
-};
+});
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -122,11 +130,13 @@ interface Customer {
   nationalCode: string;
   phone: string;
   email: string;
+  birthDate: string;
   joinDate: string;
   activePolicies: number;
   status: string;
   score: 'A' | 'B' | 'C' | 'D';
   password?: string;
+  role?: string;
 }
 
 interface Policy {
@@ -139,6 +149,8 @@ interface Policy {
   premium: string;
   status: string;
   paymentType: string;
+  payId?: string;
+  installmentsCount?: number;
   pdfFile?: File | null;
 }
 
@@ -151,49 +163,21 @@ interface Installment {
   status: string;
   daysOverdue: number;
   payLink?: string;
+  customerNationalCode?: string;
 }
 
 export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const { blogs, addBlog, updateBlog, deleteBlog } = useBlogs();
   const [searchQuery, setSearchQuery] = useState("");
-  const [customers, setCustomers] = useState<Customer[]>([
-    {
-      id: "1",
-      name: "احمد محمدی",
-      nationalCode: "1234567890",
-      phone: "09123456789",
-      email: "ahmad@example.com",
-      joinDate: "۱۴۰۳/۰۴/۱۵",
-      activePolicies: 3,
-      status: "فعال",
-      score: "A",
-      password: "",
-    },
-    {
-      id: "2",
-      name: "فاطمه احمدی",
-      nationalCode: "0987654321",
-      phone: "09187654321",
-      email: "fateme@example.com",
-      joinDate: "۱۴۰۳/۰۳/۱۰",
-      activePolicies: 1,
-      status: "فعال",
-      score: "B",
-      password: "",
-    },
-    {
-      id: "3",
-      name: "علی رضایی",
-      nationalCode: "5555555555",
-      phone: "09155555555",
-      email: "ali@example.com",
-      joinDate: "۱۴۰۳/۰۲/۰۵",
-      activePolicies: 2,
-      status: "غیرفعال",
-      score: "C",
-      password: "",
-    },
-  ]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [policies, setPolicies] = useState<Policy[]>([]);
+  const [installments, setInstallments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    customersCount: 0,
+    policiesCount: 0,
+    overdueInstallmentsCount: 0,
+  });
 
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [formData, setFormData] = useState({
@@ -202,72 +186,11 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     insuranceCode: "",
     phone: "",
     email: "",
+    birthDate: "",
     score: "A" as 'A' | 'B' | 'C' | 'D',
   });
   const [deleteCustomer, setDeleteCustomer] = useState<Customer | null>(null);
   const [showCustomerForm, setShowCustomerForm] = useState(false);
-
-  const [policies, setPolicies] = useState<Policy[]>([
-    {
-      id: "12345",
-      customerName: "احمد محمدی",
-      type: "شخص ثالث",
-      vehicle: "پژو ۴۰۵",
-      startDate: "۱۴۰۳/۰۶/۰۱",
-      endDate: "۱۴۰۴/۰۶/۰۱",
-      premium: "۵,۰۰۰,۰۰۰",
-      status: "فعال",
-      paymentType: "نقدی",
-      pdfFile: null,
-    },
-    {
-      id: "12346",
-      customerName: "احمد محمدی",
-      type: "بدنه خودرو",
-      vehicle: "پژو ۴۰۵",
-      startDate: "۱۴۰۳/۰۶/۰۱",
-      endDate: "۱۴۰۴/۰۶/۰۱",
-      premium: "۱۶,۰۰۰,۰۰۰",
-      status: "فعال",
-      paymentType: "اقساطی",
-      pdfFile: null,
-    },
-    {
-      id: "12347",
-      customerName: "فاطمه احمدی",
-      type: "آتش‌سوزی",
-      vehicle: "آپارتمان",
-      startDate: "۱۴۰۳/۰۴/۱۵",
-      endDate: "۱۴۰۴/۰۴/۱۵",
-      premium: "۳,۰۰۰,۰۰۰",
-      status: "نزدیک انقضا",
-      paymentType: "نقدی",
-      pdfFile: null,
-    },
-  ]);
-
-  const [installments, setInstallments] = useState<Installment[]>([
-    {
-      id: "1",
-      customerName: "احمد محمدی",
-      policyType: "شخص ثالث",
-      amount: "۲,۵۰۰,۰۰۰",
-      dueDate: "۱۴۰۳/۰۹/۰۱",
-      status: "معوق",
-      daysOverdue: 5,
-      payLink: "",
-    },
-    {
-      id: "2",
-      customerName: "فاطمه احمدی",
-      policyType: "آتش‌سوزی",
-      amount: "۱,۵۰۰,۰۰۰",
-      dueDate: "۱۴۰۳/۰۸/۲۸",
-      status: "پرداخت شده",
-      daysOverdue: 0,
-      payLink: "",
-    },
-  ]);
 
   const [policySearchQuery, setPolicySearchQuery] = useState("");
   const [, setIsEditPolicyDialogOpen] = useState(false);
@@ -281,11 +204,15 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     endDate: "",
     premium: "",
     status: "فعال",
-    paymentType: "نقدی",
+    paymentType: "اقساطی",
+    payId: "",
+    installmentsCount: 0,
     pdfFile: null as File | null,
   });
   const [deletePolicy, setDeletePolicy] = useState<Policy | null>(null);
   const [showAddPolicyForm, setShowAddPolicyForm] = useState(false);
+  const [customerSearchResults, setCustomerSearchResults] = useState<Customer[]>([]);
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
 
   const [editingInstallment, setEditingInstallment] =
     useState<Installment | null>(null);
@@ -312,13 +239,186 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     title: "",
     excerpt: "",
     content: "",
-    author: "",
     date: "",
     imageUrl: "",
     category: "",
   });
   const [activeTab, setActiveTab] = useState("customers");
   const [showAddBlogForm, setShowAddBlogForm] = useState(false);
+
+  const token = localStorage.getItem('token');
+
+  useEffect(() => {
+
+  const fetchCustomers = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/admin/customers', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (response.status === 401) {
+        console.error('Authentication failed - token may be invalid');
+        localStorage.removeItem('token');
+        onLogout();
+        return;
+      }
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setCustomers(data.map((c: any) => ({
+        id: c.id ? c.id.toString() : '',
+        name: c.full_name,
+        nationalCode: c.national_code,
+        phone: c.phone,
+        email: '', // Not in backend
+        birthDate: c.birth_date ? new Date(c.birth_date).toLocaleDateString('fa-IR') : '',
+        joinDate: c.created_at ? new Date(c.created_at).toLocaleDateString('fa-IR') : '',
+        activePolicies: 0, // Calculate or fetch separately
+        status: 'فعال', // Default
+        score: c.score || 'A',
+        password: c.insurance_code,
+      })));
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+      if (error instanceof Error && error.message.includes('401')) {
+        localStorage.removeItem('token');
+        onLogout();
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+    const fetchPolicies = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/admin/policies', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (response.status === 401) {
+        console.error('Authentication failed - token may be invalid');
+        localStorage.removeItem('token');
+        onLogout();
+        return;
+      }
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setPolicies(data.map((p: any) => ({
+        id: p.id.toString(),
+        customerName: p.customer ? p.customer.full_name : 'Unknown',
+        type: p.insurance_type,
+        vehicle: p.details,
+        startDate: p.start_date ? new Date(p.start_date).toLocaleDateString('fa-IR') : '',
+        endDate: p.end_date ? new Date(p.end_date).toLocaleDateString('fa-IR') : '',
+        premium: p.premium.toString(),
+        status: 'فعال', // Default
+        paymentType: p.payment_type,
+        payId: p.payment_id,
+        installmentsCount: p.installment_count,
+        pdfFile: null,
+      })));
+      
+      // Update customers with active policies count
+      setCustomers(prevCustomers =>
+        prevCustomers.map(customer => ({
+          ...customer,
+          activePolicies: data.filter((p: any) => p.customer && p.customer.national_code === customer.nationalCode).length,
+        }))
+      );
+
+
+        // Fetch stats
+      const customersCountResponse = await fetch('http://localhost:3000/admin/customers/count', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const customersCount = customersCountResponse.ok ? await customersCountResponse.json() : 0;
+
+      const policiesCountResponse = await fetch('http://localhost:3000/count', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const policiesCount = policiesCountResponse.ok ? await policiesCountResponse.json() : 0;
+
+      const overdueResponse = await fetch('http://localhost:3000/installments/overdue/count', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const overdueInstallmentsCount = overdueResponse.ok ? await overdueResponse.json() : 0;
+
+      setStats({
+        customersCount,
+        policiesCount,
+        overdueInstallmentsCount,
+      });
+    } catch (error) {
+      console.error('Error fetching policies:', error);
+      if (error instanceof Error && error.message.includes('401')) {
+        localStorage.removeItem('token');
+        onLogout();
+      }
+    }
+  };
+
+    if (token) {
+      fetchCustomers();
+      fetchPolicies();
+    }
+  }, [token, onLogout]);
+
+  useEffect(() => {
+    const fetchInstallments = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/installments/admin', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const processedInstallments = data.map((i: any) => {
+            const dueDate = new Date(i.due_date);
+            const now = new Date();
+            const daysOverdue = dueDate < now ? Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+            return {
+              id: i.id.toString(),
+              customerName: i.customer ? i.customer.full_name : 'Unknown',
+              policyType: i.policy ? i.policy.insurance_type : 'Unknown',
+              amount: i.amount.toString(),
+              dueDate: dueDate.toLocaleDateString('fa-IR'),
+              status: i.status || 'معوق',
+              daysOverdue,
+              payLink: i.pay_link || '',
+              customerNationalCode: i.customer ? i.customer.national_code : '',
+            };
+          });
+          setInstallments(processedInstallments);
+        } else {
+          console.error('Failed to fetch installments:', response.status, response.statusText);
+        }
+      } catch (error) {
+        console.error('Error fetching installments:', error);
+      }
+    };
+
+    if (token && customers.length > 0 && policies.length > 0) {
+      fetchInstallments();
+    }
+  }, [token, customers, policies]);
 
   // Update policy statuses based on expiration dates
   useEffect(() => {
@@ -346,7 +446,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         const dueDate = moment(installment.dueDate, "jYYYY/jMM/jDD");
         if (dueDate.isBefore(now)) {
           return { ...installment, status: "معوق" };
-        } else if (dueDate.diff(now, 'months', true) <= 1) {
+        } else if (dueDate.diff(now, 'days') <= 30) {
           return { ...installment, status: "نزدیک انقضا" };
         } else {
           return { ...installment, status: "آینده" };
@@ -364,6 +464,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     return `${formatted} ریال`;
   };
 
+
   const filteredCustomers = customers.filter(
     (customer) =>
       customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -376,68 +477,137 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       policy.customerName.toLowerCase().includes(policySearchQuery.toLowerCase())
   );
 
-  const handleAddCustomer = () => {
-    if (!formData.name.trim() || !formData.nationalCode.trim() || !formData.phone.trim() || !formData.email.trim()) {
-      alert("لطفا تمام فیلدهای مورد نیاز را پر کنید.");
+  const handleAddCustomer = async () => {
+    if (!formData.name.trim() || !formData.nationalCode.trim() || !formData.phone.trim() || !formData.birthDate.trim()) {
+      toast.error("لطفا تمام فیلدهای مورد نیاز را پر کنید.");
       return;
     }
-    const newCustomer = {
-      id: Date.now().toString(),
-      name: formData.name,
-      nationalCode: formData.nationalCode,
-      phone: formData.phone,
-      email: formData.email,
-      joinDate: new Date().toLocaleDateString("fa-IR"),
-      activePolicies: 0,
-      status: "فعال",
-      score: formData.score,
-      password: formData.insuranceCode,
-    };
-    setCustomers([...customers, newCustomer]);
-    setFormData({
-      name: "",
-      nationalCode: "",
-      insuranceCode: "",
-      phone: "",
-      email: "",
-      score: "A",
-    });
-    setShowCustomerForm(false);
+    try {
+      const response = await fetch('http://localhost:3000/admin/customers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          full_name: formData.name,
+          national_code: formData.nationalCode,
+          insurance_code: formData.insuranceCode || formData.phone,
+          phone: formData.phone,
+          birth_date: formData.birthDate,
+          score: formData.score,
+          role: editingCustomer?.role || 'customer',
+        }),
+      });
+      if (response.ok) {
+        const newCustomer = await response.json();
+        setCustomers([...customers, {
+          id: newCustomer.id.toString(),
+          name: newCustomer.full_name,
+          nationalCode: newCustomer.national_code,
+          phone: newCustomer.phone,
+          email: '',
+          birthDate: formData.birthDate,
+          joinDate: new Date().toLocaleDateString("fa-IR"),
+          activePolicies: 0,
+          status: "فعال",
+          score: newCustomer.score,
+          password: newCustomer.insurance_code,
+        }]);
+        setFormData({
+          name: "",
+          nationalCode: "",
+          insuranceCode: "",
+          phone: "",
+          email: "",
+          birthDate: "",
+          score: "A",
+        });
+        setShowCustomerForm(false);
+      } else {
+        toast.error('خطا در افزودن مشتری');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('خطا در افزودن مشتری');
+    }
   };
 
-  const handleEditCustomer = () => {
+  const handleEditCustomer = async () => {
     if (!editingCustomer) return;
-    setCustomers(
-      customers.map((c) =>
-        c.id === editingCustomer.id
-          ? {
-              ...c,
-              name: formData.name,
-              nationalCode: formData.nationalCode,
-              phone: formData.phone,
-              email: formData.email,
-              password: formData.insuranceCode,
-              score: formData.score,
-            }
-          : c
-      )
-    );
-    setFormData({
-      name: "",
-      nationalCode: "",
-      insuranceCode: "",
-      phone: "",
-      email: "",
-      score: "A",
-    });
-    setShowCustomerForm(false);
-    setEditingCustomer(null);
+    try {
+      const response = await fetch(`http://localhost:3000/admin/customers/${editingCustomer.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          full_name: formData.name,
+          national_code: formData.nationalCode,
+          insurance_code: formData.insuranceCode || formData.phone,
+          phone: formData.phone,
+          birth_date: formData.birthDate,
+          score: formData.score,
+          role: 'customer',
+        }),
+      });
+      if (response.ok) {
+        const updatedCustomer = await response.json();
+        setCustomers(
+          customers.map((c) =>
+            c.id === editingCustomer.id
+              ? {
+                  ...c,
+                  name: updatedCustomer.full_name,
+                  nationalCode: updatedCustomer.national_code,
+                  phone: updatedCustomer.phone,
+                  birthDate: formData.birthDate,
+                  score: updatedCustomer.score,
+                  password: updatedCustomer.insurance_code,
+                }
+              : c
+          )
+        );
+        setFormData({
+          name: "",
+          nationalCode: "",
+          insuranceCode: "",
+          phone: "",
+          email: "",
+          birthDate: "",
+          score: "A",
+        });
+        setShowCustomerForm(false);
+        setEditingCustomer(null);
+      } else {
+        toast.error('خطا در بروزرسانی مشتری');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('خطا در بروزرسانی مشتری');
+    }
   };
 
-  const handleDeleteCustomer = () => {
+  const handleDeleteCustomer = async () => {
     if (!deleteCustomer) return;
-    setCustomers(customers.filter((c) => c.id !== deleteCustomer.id));
-    setDeleteCustomer(null);
+    try {
+      const response = await fetch(`http://localhost:3000/admin/customers/${deleteCustomer.id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        setCustomers(customers.filter((c) => c.id !== deleteCustomer.id));
+        setDeleteCustomer(null);
+      } else {
+        toast.error('خطا در حذف مشتری');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('خطا در حذف مشتری');
+    }
   };
 
   const openEditDialog = (customer: Customer) => {
@@ -448,63 +618,201 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       insuranceCode: customer.password || "",
       phone: customer.phone,
       email: customer.email,
+      birthDate: customer.birthDate,
       score: customer.score,
     });
     setShowCustomerForm(true);
   };
 
-  const handleAddPolicy = () => {
-    if (!formDataPolicy.customerName.trim() || !formDataPolicy.type.trim() || !formDataPolicy.vehicle.trim() || !formDataPolicy.startDate.trim() || !formDataPolicy.endDate.trim() || !formDataPolicy.premium.trim()) {
-      alert("لطفا تمام فیلدهای مورد نیاز را پر کنید.");
+  const handleCustomerSearch = (query: string) => {
+    if (query.length < 2) {
+      setCustomerSearchResults([]);
+      setShowCustomerDropdown(false);
       return;
     }
-    const newPolicy: Policy = {
-      id: Date.now().toString(),
-      ...formDataPolicy,
-    };
-    setPolicies([...policies, newPolicy]);
-    setFormDataPolicy({
-      customerName: "",
-      customerNationalCode: "",
-      type: "",
-      vehicle: "",
-      startDate: "",
-      endDate: "",
-      premium: "",
-      status: "فعال",
-      paymentType: "نقدی",
-      pdfFile: null,
-    });
-    setShowAddPolicyForm(false);
-  };
-
-  const handleEditPolicy = () => {
-    if (!editingPolicy) return;
-    setPolicies(
-      policies.map((p) =>
-        p.id === editingPolicy.id ? { ...p, ...formDataPolicy } : p
-      )
+    const results = customers.filter(customer =>
+      customer.name.toLowerCase().includes(query.toLowerCase()) ||
+      customer.nationalCode.includes(query)
     );
-    setFormDataPolicy({
-      customerName: "",
-      customerNationalCode: "",
-      type: "",
-      vehicle: "",
-      startDate: "",
-      endDate: "",
-      premium: "",
-      status: "فعال",
-      paymentType: "نقدی",
-      pdfFile: null,
-    });
-    setIsEditPolicyDialogOpen(false);
-    setEditingPolicy(null);
+    setCustomerSearchResults(results);
+    setShowCustomerDropdown(results.length > 0);
   };
 
-  const handleDeletePolicy = () => {
+  const handleSelectCustomer = (customer: Customer) => {
+    setFormDataPolicy({
+      ...formDataPolicy,
+      customerName: customer.name,
+      customerNationalCode: customer.nationalCode,
+    });
+    setCustomerSearchResults([]);
+    setShowCustomerDropdown(false);
+  };
+
+  const handleAddPolicy = async () => {
+    if (!formDataPolicy.customerName.trim() || !formDataPolicy.customerNationalCode.trim() || !formDataPolicy.type.trim() || !formDataPolicy.vehicle.trim() || !formDataPolicy.startDate.trim() || !formDataPolicy.endDate.trim() || !formDataPolicy.premium.trim() || !formDataPolicy.payId.trim()) {
+      toast.error("لطفا تمام فیلدهای مورد نیاز را پر کنید.");
+      return;
+    }
+    try {
+      const formData = new FormData();
+      formData.append('customer_id', formDataPolicy.customerNationalCode); // Assuming nationalCode is the id, but wait, customer_id is int, nationalCode is string.
+      // Need to find customer by nationalCode to get id.
+      const customer = customers.find(c => c.nationalCode === formDataPolicy.customerNationalCode);
+      if (!customer) {
+        toast.error("مشتری یافت نشد.");
+        return;
+      }
+      if (!customer.id || isNaN(parseInt(customer.id))) {
+        toast.error("شناسه مشتری نامعتبر.");
+        return;
+      }
+      formData.append('customer_national_code', formDataPolicy.customerNationalCode);
+      formData.append('insurance_type', formDataPolicy.type);
+      formData.append('details', formDataPolicy.vehicle);
+      formData.append('start_date', moment(formDataPolicy.startDate, "jYYYY/jMM/jDD").format("YYYY-MM-DD"));
+      formData.append('end_date', moment(formDataPolicy.endDate, "jYYYY/jMM/jDD").format("YYYY-MM-DD"));
+      formData.append('premium', formDataPolicy.premium.replace(/,/g, ''));
+      formData.append('payment_type', formDataPolicy.paymentType);
+      formData.append('installment_count', formDataPolicy.installmentsCount.toString());
+      formData.append('payment_id', formDataPolicy.payId);
+      if (formDataPolicy.pdfFile) {
+        formData.append('pdf', formDataPolicy.pdfFile);
+      }
+
+      const response = await fetch('http://localhost:3000/admin/policies', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+      if (response.ok) {
+        const newPolicy = await response.json();
+        setPolicies([...policies, {
+          id: newPolicy.id.toString(),
+          customerName: formDataPolicy.customerName,
+          type: newPolicy.insurance_type,
+          vehicle: newPolicy.details,
+          startDate: formDataPolicy.startDate,
+          endDate: formDataPolicy.endDate,
+          premium: newPolicy.premium.toString(),
+          status: 'فعال',
+          paymentType: newPolicy.payment_type,
+          payId: newPolicy.payment_id,
+          installmentsCount: newPolicy.installment_count,
+          pdfFile: null,
+        }]);
+        toast.success("بیمه‌نامه با موفقیت اضافه شد.");
+        setFormDataPolicy({
+          customerName: "",
+          customerNationalCode: "",
+          type: "",
+          vehicle: "",
+          startDate: "",
+          endDate: "",
+          premium: "",
+          status: "فعال",
+          paymentType: "اقساطی",
+          payId: "",
+          installmentsCount: 0,
+          pdfFile: null,
+        });
+        setShowAddPolicyForm(false);
+      } else {
+        toast.error('خطا در افزودن بیمه‌نامه');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('خطا در افزودن بیمه‌نامه');
+    }
+  };
+
+  const handleEditPolicy = async () => {
+    if (!editingPolicy) return;
+    try {
+      const response = await fetch(`http://localhost:3000/admin/policies/${editingPolicy.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          customer_national_code: formDataPolicy.customerNationalCode,
+          insurance_type: formDataPolicy.type,
+          details: formDataPolicy.vehicle,
+          start_date: moment(formDataPolicy.startDate, "jYYYY/jMM/jDD").format("YYYY-MM-DD"),
+          end_date: moment(formDataPolicy.endDate, "jYYYY/jMM/jDD").format("YYYY-MM-DD"),
+          premium: formDataPolicy.premium.replace(/,/g, ''),
+          payment_type: formDataPolicy.paymentType,
+          installment_count: formDataPolicy.installmentsCount,
+          payment_id: formDataPolicy.payId,
+        }),
+      });
+      if (response.ok) {
+        const updatedPolicy = await response.json();
+        setPolicies(
+          policies.map((p) =>
+            p.id === editingPolicy.id
+              ? {
+                  ...p,
+                  customerName: formDataPolicy.customerName,
+                  type: updatedPolicy.insurance_type,
+                  vehicle: updatedPolicy.details,
+                  startDate: formDataPolicy.startDate,
+                  endDate: formDataPolicy.endDate,
+                  premium: updatedPolicy.premium.toString(),
+                  paymentType: updatedPolicy.payment_type,
+                  payId: updatedPolicy.payment_id,
+                  installmentsCount: updatedPolicy.installment_count,
+                }
+              : p
+          )
+        );
+        toast.success("بیمه‌نامه با موفقیت بروزرسانی شد.");
+        setFormDataPolicy({
+          customerName: "",
+          customerNationalCode: "",
+          type: "",
+          vehicle: "",
+          startDate: "",
+          endDate: "",
+          premium: "",
+          status: "فعال",
+          paymentType: "اقساطی",
+          payId: "",
+          installmentsCount: 0,
+          pdfFile: null,
+        });
+        setShowAddPolicyForm(false);
+        setEditingPolicy(null);
+      } else {
+        toast.error('خطا در بروزرسانی بیمه‌نامه');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('خطا در بروزرسانی بیمه‌نامه');
+    }
+  };
+
+  const handleDeletePolicy = async () => {
     if (!deletePolicy) return;
-    setPolicies(policies.filter((p) => p.id !== deletePolicy.id));
-    setDeletePolicy(null);
+    try {
+      const response = await fetch(`http://localhost:3000/admin/policies/${deletePolicy.id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        setPolicies(policies.filter((p) => p.id !== deletePolicy.id));
+        setDeletePolicy(null);
+      } else {
+        toast.error('خطا در حذف بیمه‌نامه');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('خطا در حذف بیمه‌نامه');
+    }
   };
 
   const openEditPolicyDialog = (policy: Policy) => {
@@ -519,6 +827,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       premium: policy.premium,
       status: policy.status,
       paymentType: policy.paymentType,
+      payId: policy.payId || "",
+      installmentsCount: policy.installmentsCount || 0,
       pdfFile: policy.pdfFile || null,
     });
     setShowAddPolicyForm(true);
@@ -548,24 +858,76 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     setShowAddInstallmentForm(false);
   };
 
-  const handleEditInstallment = () => {
+  const handleEditInstallment = async () => {
     if (!editingInstallment) return;
-    setInstallments(
-      installments.map((i) =>
-        i.id === editingInstallment.id ? { ...i, ...formDataInstallment } : i
-      )
-    );
-    setFormDataInstallment({
-      customerName: "",
-      customerNationalCode: "",
-      policyType: "",
-      amount: "",
-      dueDate: "",
-      payLink: "",
-      status: "معوق",
-    });
-    setShowAddInstallmentForm(false);
-    setEditingInstallment(null);
+    try {
+      // Find the original installment to get policy_id and customer_id
+      const originalInstallment = installments.find(i => i.id === editingInstallment.id);
+      if (!originalInstallment) {
+        toast.error('قسط مورد نظر یافت نشد');
+        return;
+      }
+
+      // Prepare the update data according to backend entity structure
+      const updateData: any = {
+        amount: parseFloat(formDataInstallment.amount.replace(/,/g, '')),
+        due_date: moment(formDataInstallment.dueDate, "jYYYY/jMM/jDD").format("YYYY-MM-DD"),
+        status: formDataInstallment.status,
+        pay_link: formDataInstallment.payLink || null,
+      };
+
+      const response = await fetch(`http://localhost:3000/installments/${editingInstallment.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updateData),
+      });
+      
+      if (response.ok) {
+        const updatedInstallment = await response.json();
+        
+        // Update local state with the response
+        setInstallments(
+          installments.map((i) =>
+            i.id === editingInstallment.id
+              ? {
+                  ...i,
+                  amount: formDataInstallment.amount,
+                  dueDate: formDataInstallment.dueDate,
+                  payLink: formDataInstallment.payLink,
+                  status: formDataInstallment.status,
+                  // Keep the original customer and policy info
+                  customerName: i.customerName,
+                  customerNationalCode: i.customerNationalCode,
+                  policyType: i.policyType,
+                }
+              : i
+          )
+        );
+        
+        toast.success("قسط با موفقیت بروزرسانی شد.");
+        setFormDataInstallment({
+          customerName: "",
+          customerNationalCode: "",
+          policyType: "",
+          amount: "",
+          dueDate: "",
+          payLink: "",
+          status: "معوق",
+        });
+        setShowAddInstallmentForm(false);
+        setEditingInstallment(null);
+      } else {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        toast.error('خطا در بروزرسانی قسط');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('خطا در بروزرسانی قسط');
+    }
   };
 
   const handleDeleteInstallment = () => {
@@ -578,7 +940,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     setEditingInstallment(installment);
     setFormDataInstallment({
       customerName: installment.customerName,
-      customerNationalCode: "",
+      customerNationalCode: installment.customerNationalCode || "",
       policyType: installment.policyType,
       amount: installment.amount,
       dueDate: installment.dueDate,
@@ -619,12 +981,12 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const filteredBlogs = blogs.filter(
     (blog) =>
       blog.title.toLowerCase().includes(blogSearchQuery.toLowerCase()) ||
-      blog.author.toLowerCase().includes(blogSearchQuery.toLowerCase()) ||
+      (blog.author && blog.author.toLowerCase().includes(blogSearchQuery.toLowerCase())) ||
       blog.category.toLowerCase().includes(blogSearchQuery.toLowerCase())
   );
 
   const handleAddBlog = () => {
-    if (!formDataBlog.title.trim() || !formDataBlog.excerpt.trim() || !formDataBlog.content.trim() || !formDataBlog.author.trim() || !formDataBlog.category.trim()) {
+    if (!formDataBlog.title.trim() || !formDataBlog.excerpt.trim() || !formDataBlog.content.trim() || !formDataBlog.category.trim()) {
       alert("لطفا تمام فیلدهای مورد نیاز را پر کنید.");
       return;
     }
@@ -636,7 +998,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       title: "",
       excerpt: "",
       content: "",
-      author: "",
       date: "",
       imageUrl: "",
       category: "",
@@ -651,7 +1012,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       title: "",
       excerpt: "",
       content: "",
-      author: "",
       date: "",
       imageUrl: "",
       category: "",
@@ -674,7 +1034,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       title: blog.title,
       excerpt: blog.excerpt,
       content: blog.content,
-      author: blog.author,
       date: blog.date,
       imageUrl: blog.imageUrl || "",
       category: blog.category,
@@ -727,8 +1086,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-10 rounded-lg flex items-center justify-center">
-                <img src="./logo.png" alt="Logo" className="w-12 h-12 rounded-lg object-cover" />
+              <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-xl">A</span>
               </div>
               <div>
                 <h1 className="text-lg">پنل مدیریت</h1>
@@ -739,7 +1098,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             </div>
 
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={onLogout}>
+              <Button variant="ghost" size="sm" onClick={() => { localStorage.removeItem('token'); onLogout(); }}>
                 <LogOut className="h-4 w-4 ml-2" />
                 خروج
               </Button>
@@ -762,8 +1121,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-2">کل مشتریان</p>
-                  <p className="text-3xl">۱,۲۴۵</p>
-                  <p className="text-sm text-green-600 mt-1">+۱۲% از ماه قبل</p>
+                  <p className="text-3xl">{stats.customersCount}</p>
+                  <p className="text-sm text-green-600 mt-1">آمار به‌روز</p>
                 </div>
                 <Users className="h-8 w-8 text-blue-600" />
               </div>
@@ -777,23 +1136,23 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   <p className="text-sm text-gray-600 mb-2">
                     بیمه‌نامه‌های فعال
                   </p>
-                  <p className="text-3xl">۳,۴۵۶</p>
-                  <p className="text-sm text-green-600 mt-1">+۸% از ماه قبل</p>
+                  <p className="text-3xl">{stats.policiesCount}</p>
+                  <p className="text-sm text-green-600 mt-1">آمار به‌روز</p>
                 </div>
                 <FileText className="h-8 w-8 text-green-600" />
               </div>
             </CardContent>
           </Card>
 
-          
+
 
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-2">اقساط معوق</p>
-                  <p className="text-3xl text-red-600">۴۵</p>
-                  <p className="text-sm text-red-600 mt-1">-۳% از ماه قبل</p>
+                  <p className="text-3xl text-red-600">{stats.overdueInstallmentsCount}</p>
+                  <p className="text-sm text-red-600 mt-1">آمار به‌روز</p>
                 </div>
                 <CreditCard className="h-8 w-8 text-red-600" />
               </div>
@@ -861,6 +1220,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         insuranceCode: "",
                         phone: "",
                         email: "",
+                        birthDate: "",
                         score: "A",
                       });
                       setShowCustomerForm((prev) => !prev);
@@ -921,12 +1281,11 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           htmlFor="insuranceCode"
                           className="text-right"
                         >
-                          کد بیمه (رمز عبور)
+                          کد بیمه گزار
                         </Label>
                         <Input
                           id="insuranceCode"
                           name="insuranceCode"
-                          type="password"
                           value={formData.insuranceCode}
                           onChange={(e) =>
                             setFormData({
@@ -951,6 +1310,21 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           }
                           className="col-span-3"
                         />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="birthDate" className="text-right">
+                          تاریخ تولد
+                        </Label>
+                        <div className="col-span-3">
+                          <ClientOnlyDatePicker
+                            id="birthDate"
+                            value={formData.birthDate}
+                            onChange={(date: string) => {
+                              setFormData({ ...formData, birthDate: date });
+                            }}
+                            placeholder="انتخاب تاریخ تولد"
+                          />
+                        </div>
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="score" className="text-right">
@@ -989,6 +1363,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                             insuranceCode: "",
                             phone: "",
                             email: "",
+                            birthDate: "",
                             score: "A",
                           });
                           setShowCustomerForm(false);
@@ -1119,27 +1494,46 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         {editingPolicy ? "ویرایش بیمه‌نامه" : "صدور بیمه‌نامه"}
                       </h3>
                     <div className="grid gap-4 py-2">
-                      <div className="grid grid-cols-4 items-center gap-4">
-                         <Label
-                           htmlFor="policy-customerName"
-                           className="text-right"
-                         >
-                           نام مشتری
-                         </Label>
-                         <Input
-                           id="policy-customerName"
-                           name="customerName"
-                           autoComplete="name"
-                           value={formDataPolicy.customerName}
-                           onChange={(e) =>
-                             setFormDataPolicy({
-                               ...formDataPolicy,
-                               customerName: e.target.value,
-                             })
-                           }
-                           className="col-span-3"
-                         />
-                       </div>
+                      <div className="grid grid-cols-4 items-center gap-4 relative">
+                        <Label
+                          htmlFor="policy-customerName"
+                          className="text-right"
+                        >
+                          نام مشتری
+                        </Label>
+                        <div className="col-span-3 relative">
+                          <Input
+                            id="policy-customerName"
+                            name="customerName"
+                            autoComplete="name"
+                            value={formDataPolicy.customerName}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setFormDataPolicy({
+                                ...formDataPolicy,
+                                customerName: value,
+                              });
+                              handleCustomerSearch(value);
+                            }}
+                            className="w-full"
+                            placeholder="جستجو نام مشتری..."
+                          />
+                          {showCustomerDropdown && customerSearchResults.length > 0 && (
+                            <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto mt-1">
+                              {customerSearchResults.map((customer) => (
+                                <div
+                                  key={customer.id}
+                                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                                  onClick={() => handleSelectCustomer(customer)}
+                                >
+                                  <div className="font-medium">{customer.name}</div>
+                                  <div className="text-sm text-gray-500">{customer.nationalCode}</div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                        <div className="grid grid-cols-4 items-center gap-4">
                          <Label
                            htmlFor="policy-customerNationalCode"
@@ -1165,23 +1559,30 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         <Label htmlFor="policy-type" className="text-right">
                           نوع بیمه
                         </Label>
-                        <Input
-                          id="policy-type"
+                        <Select
                           name="policy-type"
-                          autoComplete="off"
                           value={formDataPolicy.type}
-                          onChange={(e) =>
+                          onValueChange={(value: string) =>
                             setFormDataPolicy({
                               ...formDataPolicy,
-                              type: e.target.value,
+                              type: value,
                             })
                           }
-                          className="col-span-3"
-                        />
+                        >
+                          <SelectTrigger className="col-span-3">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="ثالث">ثالث</SelectItem>
+                            <SelectItem value="بدنه">بدنه</SelectItem>
+                            <SelectItem value="آتش سوزی">آتش سوزی</SelectItem>
+                            <SelectItem value="حوادث">حوادث</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="policy-vehicle" className="text-right">
-                          موضوع بیمه
+                          جزییات بیمه
                         </Label>
                         <Input
                           id="policy-vehicle"
@@ -1274,6 +1675,44 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         </Select>
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="policy-installmentsCount" className="text-right">
+                          تعداد اقساط
+                        </Label>
+                        <Input
+                          id="policy-installmentsCount"
+                          name="installmentsCount"
+                          type="number"
+                          min="1"
+                          max="12"
+                          value={formDataPolicy.installmentsCount || ""}
+                          onChange={(e) =>
+                            setFormDataPolicy({
+                              ...formDataPolicy,
+                              installmentsCount: parseInt(e.target.value) || 0,
+                            })
+                          }
+                          disabled={formDataPolicy.paymentType === "نقدی"}
+                          className="col-span-3"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="policy-payId" className="text-right">
+                          شناسه پرداخت
+                        </Label>
+                        <Input
+                          id="policy-payId"
+                          name="payId"
+                          value={formDataPolicy.payId}
+                          onChange={(e) =>
+                            setFormDataPolicy({
+                              ...formDataPolicy,
+                              payId: e.target.value,
+                            })
+                          }
+                          className="col-span-3"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="policy-pdf" className="text-right">
                           فایل PDF
                         </Label>
@@ -1311,7 +1750,9 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                               endDate: "",
                               premium: "",
                               status: "فعال",
-                              paymentType: "نقدی",
+                              paymentType: "اقساطی",
+                              payId: "",
+                              installmentsCount: 0,
                               pdfFile: null,
                             });
                             setShowAddPolicyForm(false);
@@ -1342,6 +1783,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                        <TableHead className="text-left pl-8">عملیات</TableHead>
                        <TableHead className="text-right">وضعیت</TableHead>
                        <TableHead className="text-right">نوع پرداخت</TableHead>
+                       <TableHead className="text-right">شناسه پرداخت</TableHead>
+                       <TableHead className="text-right">تعداد اقساط</TableHead>
                        <TableHead className="text-right">حق بیمه</TableHead>
                        <TableHead className="text-right">تاریخ انقضا</TableHead>
                        <TableHead className="text-right">تاریخ شروع</TableHead>
@@ -1399,6 +1842,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         </TableCell>
                         <TableCell>{getStatusBadge(policy.status)}</TableCell>
                         <TableCell>{policy.paymentType}</TableCell>
+                        <TableCell>{policy.payId}</TableCell>
+                        <TableCell>{policy.installmentsCount || 0}</TableCell>
                         <TableCell>{formatPrice(policy.premium)}</TableCell>
                         <TableCell>{policy.endDate}</TableCell>
                         <TableCell>{policy.startDate}</TableCell>
@@ -1447,68 +1892,97 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         {editingInstallment ? "ویرایش قسط" : "افزودن قسط"}
                       </h3>
                     <div className="grid gap-4 py-2">
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label
-                          htmlFor="installment-customerName"
-                          className="text-right"
-                        >
-                          نام مشتری
-                        </Label>
-                        <Input
-                          id="installment-customerName"
-                          name="customerName"
-                          autoComplete="name"
-                          value={formDataInstallment.customerName}
-                          onChange={(e) =>
-                            setFormDataInstallment({
-                              ...formDataInstallment,
-                              customerName: e.target.value,
-                            })
-                          }
-                          className="col-span-3"
-                        />
-                      </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label
-                          htmlFor="installment-customerNationalCode"
-                          className="text-right"
-                        >
-                          کد ملی مشتری
-                        </Label>
-                        <Input
-                          id="installment-customerNationalCode"
-                          name="customerNationalCode"
-                          autoComplete="off"
-                          value={formDataInstallment.customerNationalCode}
-                          onChange={(e) =>
-                            setFormDataInstallment({
-                              ...formDataInstallment,
-                              customerNationalCode: e.target.value,
-                            })
-                          }
-                          className="col-span-3"
-                        />
-                      </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label
-                          htmlFor="installment-policyType"
-                          className="text-right"
-                        >
-                          نوع بیمه
-                        </Label>
-                        <Input
-                          id="installment-policyType"
-                          name="policyType"
-                          value={formDataInstallment.policyType}
-                          onChange={(e) =>
-                            setFormDataInstallment({
-                              ...formDataInstallment,
-                              policyType: e.target.value,
-                            })
-                          }
-                          className="col-span-3"
-                        />
-                      </div>
+                      {/* Show customer and policy info as read-only when editing */}
+                      {editingInstallment && (
+                        <>
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label className="text-right">نام مشتری</Label>
+                            <div className="col-span-3 p-2 bg-gray-50 rounded">
+                              {formDataInstallment.customerName}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label className="text-right">کد ملی مشتری</Label>
+                            <div className="col-span-3 p-2 bg-gray-50 rounded">
+                              {formDataInstallment.customerNationalCode}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label className="text-right">نوع بیمه</Label>
+                            <div className="col-span-3 p-2 bg-gray-50 rounded">
+                              {formDataInstallment.policyType}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                      
+                      {/* Show input fields for new installment */}
+                      {!editingInstallment && (
+                        <>
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label
+                              htmlFor="installment-customerName"
+                              className="text-right"
+                            >
+                              نام مشتری
+                            </Label>
+                            <Input
+                              id="installment-customerName"
+                              name="customerName"
+                              autoComplete="name"
+                              value={formDataInstallment.customerName}
+                              onChange={(e) =>
+                                setFormDataInstallment({
+                                  ...formDataInstallment,
+                                  customerName: e.target.value,
+                                })
+                              }
+                              className="col-span-3"
+                            />
+                          </div>
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label
+                              htmlFor="installment-customerNationalCode"
+                              className="text-right"
+                            >
+                              کد ملی مشتری
+                            </Label>
+                            <Input
+                              id="installment-customerNationalCode"
+                              name="customerNationalCode"
+                              autoComplete="off"
+                              value={formDataInstallment.customerNationalCode}
+                              onChange={(e) =>
+                                setFormDataInstallment({
+                                  ...formDataInstallment,
+                                  customerNationalCode: e.target.value,
+                                })
+                              }
+                              className="col-span-3"
+                            />
+                          </div>
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label
+                              htmlFor="installment-policyType"
+                              className="text-right"
+                            >
+                              نوع بیمه
+                            </Label>
+                            <Input
+                              id="installment-policyType"
+                              name="policyType"
+                              value={formDataInstallment.policyType}
+                              onChange={(e) =>
+                                setFormDataInstallment({
+                                  ...formDataInstallment,
+                                  policyType: e.target.value,
+                                })
+                              }
+                              className="col-span-3"
+                            />
+                          </div>
+                        </>
+                      )}
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label
                           htmlFor="installment-amount"
@@ -1836,23 +2310,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         />
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="blog-author" className="text-right">
-                          نویسنده
-                        </Label>
-                        <Input
-                          id="blog-author"
-                          name="blog-author"
-                          value={formDataBlog.author}
-                          onChange={(e) =>
-                            setFormDataBlog({
-                              ...formDataBlog,
-                              author: e.target.value,
-                            })
-                          }
-                          className="col-span-3"
-                        />
-                      </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="blog-date" className="text-right">
                           تاریخ
                         </Label>
@@ -1917,7 +2374,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                               title: "",
                               excerpt: "",
                               content: "",
-                              author: "",
                               date: "",
                               imageUrl: "",
                               category: "",
@@ -1950,7 +2406,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       <TableHead className="pl-8">عملیات</TableHead>
                       <TableHead className="text-right">تاریخ</TableHead>
                       <TableHead className="text-right">دسته‌بندی</TableHead>
-                      <TableHead className="text-right">نویسنده</TableHead>
                       <TableHead className="text-right">عنوان</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -2000,7 +2455,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         </TableCell>
                         <TableCell>{blog.date}</TableCell>
                         <TableCell>{blog.category}</TableCell>
-                        <TableCell>{blog.author}</TableCell>
                         <TableCell className="max-w-xs truncate">
                           {blog.title}
                         </TableCell>

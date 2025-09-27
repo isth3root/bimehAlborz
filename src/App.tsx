@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Toaster } from "sonner";
 import { Header } from './components/Header';
 import { HeroSlider } from './components/HeroSlider';
 import { ServicesSection } from './components/ServicesSection';
@@ -57,6 +58,7 @@ function AppContent() {
 
   return (
     <>
+      <Toaster position="top-center" />
       <ScrollToTop />
       <Routes>
       <Route path="/" element={

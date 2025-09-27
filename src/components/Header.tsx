@@ -15,7 +15,10 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
     <header className="bg-white shadow-sm border-b">
       {/* Top bar */}
       <div className="bg-gray-50 py-2">
-        <div className="container mx-auto px-4 flex justify-between items-center flex-reverse">
+        <div className="container mx-auto px-4 flex justify-between items-center flex-row-reverse">
+          <div className="text-sm text-gray-700 font-bold">
+            نماینگی رییس زاده
+          </div>
           <Button
             variant="ghost"
             size="sm"
@@ -32,8 +35,8 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between flex-row-reverse">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-lg flex items-center justify-center">
-              <img src="./logo.png" alt="Logo" className="w-12 h-12 rounded-lg object-cover" />
+            <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-xl">A</span>
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900">بیمه البرز</h1>

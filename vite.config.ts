@@ -5,4 +5,7 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   base: '/bimehAlborz/',
   plugins: [react(), tailwindcss()],
+  server: {
+    historyApiFallback: true,
+  },
 })

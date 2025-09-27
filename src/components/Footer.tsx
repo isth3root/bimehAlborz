@@ -10,8 +10,8 @@ export function Footer() {
           {/* Company info */}
           <div>
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-lg flex items-center justify-center">
-                <img src="./logo.png" alt="Logo" className="w-12 h-12 rounded-lg object-cover" />
+              <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-xl">A</span>
               </div>
               <div>
                 <h3 className="text-xl">بیمه البرز</h3>
@@ -41,11 +41,11 @@ export function Footer() {
             <ul className="space-y-4">
               <li className="flex items-center gap-3">
                 <Phone className="h-5 w-5 text-green-400" />
-                <span className="text-gray-400">۰۲۱-۱۲۳۴۵۶۷۸</span>
+                <span className="text-gray-400">09385540717</span>
               </li>
               <li className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-green-400 mt-1" />
-                <span className="text-gray-400">تهران، خیابان ولیعصر، پلاک ۱۲۳</span>
+                <span className="text-gray-400">اهواز امانیه خیابان سقراط شرقی مجتمع گلاریس طبقه ۳ واحد ۱۱</span>
               </li>
             </ul>
           </div>
@@ -55,7 +55,7 @@ export function Footer() {
             <p>موقعیت ما روی نقشه</p>
             <div className="mt-4">
               <iframe
-                src="https://maps.google.com/maps?q=35.7298524496717,51.377519966423876&output=embed"
+                src="https://maps.google.com/maps?q=31.3204177,48.6673714&output=embed"
                 width="100%"
                 height="150"
                 style={{ border: 0 }}
@@ -73,13 +73,8 @@ export function Footer() {
 
       {/* Copyright */}
       <div className="container mx-auto px-4 py-6">
-        <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
+        <div className="flex flex-col md:flex-row justify-center items-center text-sm text-gray-400">
           <p>© ۱۴۰۴ بیمه البرز. تمامی حقوق محفوظ است.</p>
-          <div className="flex gap-6 mt-4 md:mt-0">
-            <a href="#" className="hover:text-green-400 transition-colors">حریم خصوصی</a>
-            <a href="#" className="hover:text-green-400 transition-colors">شرایط استفاده</a>
-            <a href="#" className="hover:text-green-400 transition-colors">سوالات متداول</a>
-          </div>
         </div>
       </div>
     </footer>
