@@ -318,7 +318,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       setPolicies(data.map((p: any) => ({
         id: p.id.toString(),
         customerName: p.customer ? p.customer.full_name : 'Unknown',
-        customerNationalCode: p.customer_national_code,
+        customerNationalCode: p.customer_national_code || (p.customer ? p.customer.national_code : ''),
         type: p.insurance_type,
         vehicle: p.details,
         startDate: p.start_date ? new Date(p.start_date).toLocaleDateString('fa-IR') : '',
@@ -796,7 +796,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             p.id === editingPolicy.id
               ? {
                   ...p,
-                  customerName: formDataPolicy.customerName,
+                  customerName: updatedPolicy.customer ? updatedPolicy.customer.full_name : formDataPolicy.customerName,
                   customerNationalCode: updatedPolicy.customer_national_code,
                   type: updatedPolicy.insurance_type,
                   vehicle: updatedPolicy.details,
@@ -1410,58 +1410,66 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredCustomers.map((customer) => (
-                      <TableRow key={customer.id}>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => openEditDialog(customer)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-red-600 hover:text-red-700"
-                                  onClick={() => setDeleteCustomer(customer)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>حذف مشتری</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    آیا مطمئن هستید که می‌خواهید این مشتری را
-                                    حذف کنید؟ این عمل قابل بازگشت نیست.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>لغو</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={handleDeleteCustomer}
-                                    className="bg-red-600 hover:bg-red-700"
+                    {filteredCustomers.length > 0 ? (
+                      filteredCustomers.map((customer) => (
+                        <TableRow key={customer.id}>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openEditDialog(customer)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-red-600 hover:text-red-700"
+                                    onClick={() => setDeleteCustomer(customer)}
                                   >
-                                    حذف
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>حذف مشتری</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      آیا مطمئن هستید که می‌خواهید این مشتری را
+                                      حذف کنید؟ این عمل قابل بازگشت نیست.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>لغو</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={handleDeleteCustomer}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      حذف
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </TableCell>
+                          <TableCell>{getStatusBadge(customer.status)}</TableCell>
+                          <TableCell>{customer.score}</TableCell>
+                          <TableCell>{customer.activePolicies}</TableCell>
+
+                          <TableCell>{customer.phone}</TableCell>
+                          <TableCell>{customer.nationalCode}</TableCell>
+                          <TableCell>{customer.name}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center h-24">
+                          هیچ مشتری‌ای یافت نشد. برای افزودن مشتری جدید روی دکمه "افزودن مشتری" کلیک کنید.
                         </TableCell>
-                        <TableCell>{getStatusBadge(customer.status)}</TableCell>
-                        <TableCell>{customer.score}</TableCell>
-                        <TableCell>{customer.activePolicies}</TableCell>
-                        
-                        <TableCell>{customer.phone}</TableCell>
-                        <TableCell>{customer.nationalCode}</TableCell>
-                        <TableCell>{customer.name}</TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -1478,8 +1486,25 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     <CardTitle>مدیریت بیمه‌نامه‌ها</CardTitle>
                   </div>
                   <Button
-                    onClick={() => setShowAddPolicyForm((prev) => !prev)}
-                    variant={showAddPolicyForm ? "outline" : "default"}
+                    onClick={() => {
+                      setEditingPolicy(null);
+                      setFormDataPolicy({
+                        customerName: "",
+                        customerNationalCode: "",
+                        type: "",
+                        vehicle: "",
+                        startDate: "",
+                        endDate: "",
+                        premium: "",
+                        status: "فعال",
+                        paymentType: "اقساطی",
+                        payId: "",
+                        installmentsCount: 0,
+                        pdfFile: null,
+                      });
+                      setShowAddPolicyForm((prev) => !prev)
+                    }}
+                    variant={showAddPolicyForm && !editingPolicy ? "outline" : "default"}
                   >
                     <Plus className="h-4 w-4 ml-2" />
                     صدور بیمه‌نامه
@@ -1803,64 +1828,72 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                      </TableRow>
                    </TableHeader>
                   <TableBody>
-                    {filteredPolicies.map((policy) => (
-                      <TableRow key={policy.id}>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => openEditPolicyDialog(policy)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-red-600 hover:text-red-700"
-                                  onClick={() => setDeletePolicy(policy)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    حذف بیمه‌نامه
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    آیا مطمئن هستید که می‌خواهید این بیمه‌نامه
-                                    را حذف کنید؟ این عمل قابل بازگشت نیست.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>لغو</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={handleDeletePolicy}
-                                    className="bg-red-600 hover:bg-red-700"
+                    {filteredPolicies.length > 0 ? (
+                      filteredPolicies.map((policy) => (
+                        <TableRow key={policy.id}>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openEditPolicyDialog(policy)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-red-600 hover:text-red-700"
+                                    onClick={() => setDeletePolicy(policy)}
                                   >
-                                    حذف
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      حذف بیمه‌نامه
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      آیا مطمئن هستید که می‌خواهید این بیمه‌نامه
+                                      را حذف کنید؟ این عمل قابل بازگشت نیست.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>لغو</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={handleDeletePolicy}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      حذف
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </TableCell>
+                          <TableCell>{getStatusBadge(policy.status)}</TableCell>
+                          <TableCell>{policy.paymentType}</TableCell>
+                          <TableCell>{policy.payId}</TableCell>
+                          <TableCell>{policy.installmentsCount || 0}</TableCell>
+                          <TableCell>{formatPrice(policy.premium)}</TableCell>
+                          <TableCell>{policy.endDate}</TableCell>
+                          <TableCell>{policy.startDate}</TableCell>
+                          <TableCell>{policy.vehicle}</TableCell>
+                          <TableCell>{policy.type}</TableCell>
+                          <TableCell>{policy.customerName}</TableCell>
+                          <TableCell>{policy.id}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={12} className="text-center h-24">
+                          هیچ بیمه‌نامه‌ای یافت نشد. برای افزودن بیمه‌نامه جدید روی دکمه "صدور بیمه‌نامه" کلیک کنید.
                         </TableCell>
-                        <TableCell>{getStatusBadge(policy.status)}</TableCell>
-                        <TableCell>{policy.paymentType}</TableCell>
-                        <TableCell>{policy.payId}</TableCell>
-                        <TableCell>{policy.installmentsCount || 0}</TableCell>
-                        <TableCell>{formatPrice(policy.premium)}</TableCell>
-                        <TableCell>{policy.endDate}</TableCell>
-                        <TableCell>{policy.startDate}</TableCell>
-                        <TableCell>{policy.vehicle}</TableCell>
-                        <TableCell>{policy.type}</TableCell>
-                        <TableCell>{policy.customerName}</TableCell>
-                        <TableCell>{policy.id}</TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -2159,71 +2192,81 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {sortedInstallments.map((installment) => (
-                      <TableRow key={installment.id}>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() =>
-                                openEditInstallmentDialog(installment)
-                              }
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-red-600 hover:text-red-700"
-                                  onClick={() =>
-                                    setDeleteInstallment(installment)
-                                  }
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>حذف قسط</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    آیا مطمئن هستید که می‌خواهید این قسط را حذف
-                                    کنید؟ این عمل قابل بازگشت نیست.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>لغو</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={handleDeleteInstallment}
-                                    className="bg-red-600 hover:bg-red-700"
+                    {sortedInstallments.length > 0 ? (
+                      sortedInstallments.map((installment) => (
+                        <TableRow key={installment.id}>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  openEditInstallmentDialog(installment)
+                                }
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-red-600 hover:text-red-700"
+                                    onClick={() =>
+                                      setDeleteInstallment(installment)
+                                    }
                                   >
-                                    حذف
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>حذف قسط</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      آیا مطمئن هستید که می‌خواهید این قسط را حذف
+                                      کنید؟ این عمل قابل بازگشت نیست.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>لغو</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={handleDeleteInstallment}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      حذف
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {getStatusBadge(installment.status)}
+                          </TableCell>
+                          <TableCell>
+                            {installment.status === 'پرداخت شده' ? (
+                              "—"
+                            ) : installment.daysOverdue > 0 ? (
+                              <span className="text-red-600">
+                                {installment.daysOverdue} روز
+                              </span>
+                            ) : (
+                              "—"
+                            )}
+                          </TableCell>
+                          <TableCell>{installment.dueDate}</TableCell>
+                          <TableCell>{formatPrice(installment.amount)}</TableCell>
+                          <TableCell>{installment.policyType}</TableCell>
+                          <TableCell>{installment.customerName}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center h-24">
+                          هیچ قسطی یافت نشد. اقساط به طور خودکار با ایجاد بیمه‌نامه اقساطی اضافه می‌شوند.
                         </TableCell>
-                        <TableCell>
-                          {getStatusBadge(installment.status)}
-                        </TableCell>
-                        <TableCell>
-                          {installment.daysOverdue > 0 ? (
-                            <span className="text-red-600">
-                              {installment.daysOverdue} روز
-                            </span>
-                          ) : (
-                            "-"
-                          )}
-                        </TableCell>
-                        <TableCell>{installment.dueDate}</TableCell>
-                        <TableCell>{formatPrice(installment.amount)}</TableCell>
-                        <TableCell>{installment.policyType}</TableCell>
-                        <TableCell>{installment.customerName}</TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -2417,56 +2460,64 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredBlogs.map((blog) => (
-                      <TableRow key={blog.id}>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => openEditBlogDialog(blog)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-red-600 hover:text-red-700"
-                                  onClick={() => setDeleteBlogId(blog.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>حذف مقاله</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    آیا مطمئن هستید که می‌خواهید این مقاله را
-                                    حذف کنید؟ این عمل قابل بازگشت نیست.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>لغو</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={handleDeleteBlog}
-                                    className="bg-red-600 hover:bg-red-700"
+                    {filteredBlogs.length > 0 ? (
+                      filteredBlogs.map((blog) => (
+                        <TableRow key={blog.id}>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openEditBlogDialog(blog)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-red-600 hover:text-red-700"
+                                    onClick={() => setDeleteBlogId(blog.id)}
                                   >
-                                    حذف
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </TableCell>
-                        <TableCell>{blog.date}</TableCell>
-                        <TableCell>{blog.category}</TableCell>
-                        <TableCell className="max-w-xs truncate">
-                          {blog.title}
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>حذف مقاله</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      آیا مطمئن هستید که می‌خواهید این مقاله را
+                                      حذف کنید؟ این عمل قابل بازگشت نیست.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>لغو</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={handleDeleteBlog}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      حذف
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </TableCell>
+                          <TableCell>{blog.date}</TableCell>
+                          <TableCell>{blog.category}</TableCell>
+                          <TableCell className="max-w-xs truncate">
+                            {blog.title}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center h-24">
+                          هیچ مقاله‌ای یافت نشد. برای افزودن مقاله جدید روی دکمه "افزودن مقاله" کلیک کنید.
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>

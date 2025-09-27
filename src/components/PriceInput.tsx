@@ -13,16 +13,19 @@ export const PriceInput = forwardRef<HTMLInputElement, PriceInputProps>(
     const [displayValue, setDisplayValue] = useState('');
 
     useEffect(() => {
-      // Format the value for display
-      const numericValue = value.replace(/[^\d]/g, '');
-      const formatted = numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      // When the raw value changes from the parent, format it for display
+      if (value === null || value === undefined) {
+        setDisplayValue('');
+        return;
+      }
+      // The value from the parent should be a clean string of digits
+      const formatted = value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
       setDisplayValue(formatted);
     }, [value]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const inputValue = e.target.value.replace(/[^\d,]/g, '');
-      // Remove commas for storage
-      const numericValue = inputValue.replace(/,/g, '');
+      // On user input, strip all non-digit characters and send the raw number back to the parent
+      const numericValue = e.target.value.replace(/[^\d]/g, '');
       onChange(numericValue);
     };
 
