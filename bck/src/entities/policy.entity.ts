@@ -38,6 +38,9 @@ export class Policy {
   payment_id: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
+  pay_link: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
   pdf_path: string;
 
   @CreateDateColumn()

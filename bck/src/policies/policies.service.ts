@@ -48,13 +48,20 @@ export class PoliciesService {
         const dueDate = new Date(startDate);
         dueDate.setMonth(startDate.getMonth() + i - 1);
 
+        const now = new Date();
+        let status = 'آینده';
+        if (dueDate < now) {
+            status = 'معوق';
+        }
+
         await this.installmentsService.create({
           customer_id: policyWithRelations.customer.id,
           policy_id: policyWithRelations.id,
           installment_number: i,
           amount: installmentAmount,
           due_date: dueDate,
-          status: 'معوق',
+          status: status,
+          pay_link: policyWithRelations.pay_link, // Pass the pay_link from the policy
         });
       }
     }
@@ -64,6 +71,15 @@ export class PoliciesService {
 
   async update(id: number, policy: Partial<Policy>): Promise<Policy | null> {
     await this.policyRepository.update(id, policy);
+
+    // If the pay_link was part of the update, propagate it to all installments
+    if (policy.pay_link !== undefined) {
+      const installments = await this.installmentsService.findByPolicyId(id);
+      for (const installment of installments) {
+        await this.installmentsService.update(installment.id, { pay_link: policy.pay_link });
+      }
+    }
+
     return this.findOne(id);
   }
 

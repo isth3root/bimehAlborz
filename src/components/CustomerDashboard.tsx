@@ -427,25 +427,33 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {allInstallments
-                  .filter(inst => inst.status !== 'پرداخت شده')
-                  .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
-                  .map(installment => (
-                  <TableRow key={installment.id}>
-                    <TableCell>{installment.policy?.insurance_type || 'N/A'}</TableCell>
-                    <TableCell>{installment.installment_number}</TableCell>
-                    <TableCell>{parseFloat(installment.amount).toLocaleString('fa-IR')} ریال</TableCell>
-                    <TableCell>{new Date(installment.due_date).toLocaleDateString('fa-IR')}</TableCell>
-                    <TableCell>{getPaymentStatusBadge(installment.status)}</TableCell>
-                    <TableCell>
-                      {installment.pay_link && (
-                        <Button size="sm" onClick={() => window.open(installment.pay_link, '_blank')}>
-                          پرداخت
-                        </Button>
-                      )}
+                {allInstallments.filter(inst => inst.status !== 'پرداخت شده').length > 0 ? (
+                  allInstallments
+                    .filter(inst => inst.status !== 'پرداخت شده')
+                    .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
+                    .map(installment => (
+                    <TableRow key={installment.id}>
+                      <TableCell>{installment.policy?.insurance_type || 'N/A'}</TableCell>
+                      <TableCell>{installment.installment_number}</TableCell>
+                      <TableCell>{parseFloat(installment.amount).toLocaleString('fa-IR')} ریال</TableCell>
+                      <TableCell>{new Date(installment.due_date).toLocaleDateString('fa-IR')}</TableCell>
+                      <TableCell>{getPaymentStatusBadge(installment.status)}</TableCell>
+                      <TableCell>
+                        {installment.pay_link && (
+                          <Button size="sm" onClick={() => window.open(installment.pay_link, '_blank')}>
+                            پرداخت
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center h-24">
+                      شما هیچ قسط پرداخت نشده‌ای ندارید.
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </CardContent>
@@ -472,24 +480,32 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {selectedPolicy && allInstallments
-                    .filter(inst => inst.policy_id === selectedPolicy.id)
-                    .sort((a, b) => a.installment_number - b.installment_number)
-                    .map((installment) => (
-                    <TableRow key={installment.id}>
-                      <TableCell>{installment.installment_number}</TableCell>
-                      <TableCell>{parseFloat(installment.amount).toLocaleString('fa-IR')} ریال</TableCell>
-                      <TableCell>{new Date(installment.due_date).toLocaleDateString('fa-IR')}</TableCell>
-                      <TableCell>{getPaymentStatusBadge(installment.status)}</TableCell>
-                      <TableCell>
-                        {installment.pay_link && (
-                          <Button size="sm" onClick={() => window.open(installment.pay_link, '_blank')}>
-                            پرداخت
-                          </Button>
-                        )}
+                  {selectedPolicy && allInstallments.filter(inst => inst.policy_id === selectedPolicy.id).length > 0 ? (
+                    allInstallments
+                      .filter(inst => inst.policy_id === selectedPolicy.id)
+                      .sort((a, b) => a.installment_number - b.installment_number)
+                      .map((installment) => (
+                      <TableRow key={installment.id}>
+                        <TableCell>{installment.installment_number}</TableCell>
+                        <TableCell>{parseFloat(installment.amount).toLocaleString('fa-IR')} ریال</TableCell>
+                        <TableCell>{new Date(installment.due_date).toLocaleDateString('fa-IR')}</TableCell>
+                        <TableCell>{getPaymentStatusBadge(installment.status)}</TableCell>
+                        <TableCell>
+                          {installment.pay_link && (
+                            <Button size="sm" onClick={() => window.open(installment.pay_link, '_blank')}>
+                              پرداخت
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center h-24">
+                        این بیمه‌نامه قسطی نیست یا اقساطی برای آن ثبت نشده است.
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </div>

@@ -153,6 +153,7 @@ interface Policy {
   installmentsCount?: number;
   pdfFile?: File | null;
   customerNationalCode?: string;
+  pay_link?: string;
 }
 
 interface Installment {
@@ -210,6 +211,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     payId: "",
     installmentsCount: 0,
     pdfFile: null as File | null,
+    pay_link: "",
   });
   const [deletePolicy, setDeletePolicy] = useState<Policy | null>(null);
   const [showAddPolicyForm, setShowAddPolicyForm] = useState(false);
@@ -330,6 +332,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         payId: p.payment_id,
         installmentsCount: p.installment_count,
         pdfFile: null,
+        pay_link: p.pay_link,
       })));
       
       // Update customers with active policies count
@@ -686,6 +689,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       formData.append('payment_type', formDataPolicy.paymentType);
       formData.append('installment_count', formDataPolicy.installmentsCount.toString());
       formData.append('payment_id', formDataPolicy.payId);
+      formData.append('pay_link', formDataPolicy.pay_link);
       if (formDataPolicy.pdfFile) {
         formData.append('pdf', formDataPolicy.pdfFile, formDataPolicy.pdfFile.name);
       }
@@ -717,40 +721,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         }]);
 
         // Refetch installments to include newly created ones
-        const fetchInstallments = async () => {
-          try {
-            const response = await fetch('http://localhost:3000/installments/admin', {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            });
-            if (response.ok) {
-              const data = await response.json();
-              const processedInstallments = data.map((i: any) => {
-                const dueDate = new Date(i.due_date);
-                const now = new Date();
-                const daysOverdue = dueDate < now ? Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
-                return {
-                  id: i.id.toString(),
-                  customerName: i.customer ? i.customer.full_name : 'Unknown',
-                  policyType: i.policy ? i.policy.insurance_type : 'Unknown',
-                  amount: i.amount.toString(),
-                  dueDate: dueDate.toLocaleDateString('fa-IR'),
-                  status: i.status || 'معوق',
-                  daysOverdue,
-                  payLink: i.pay_link || '',
-                  customerNationalCode: i.customer ? i.customer.national_code : '',
-                };
-              });
-              setInstallments(processedInstallments);
-            } else {
-              console.error('Failed to fetch installments:', response.status, response.statusText);
-            }
-          } catch (error) {
-            console.error('Error fetching installments:', error);
-          }
-        };
-        fetchInstallments();
+        await refetchAndProcessInstallments();
 
         toast.success("بیمه‌نامه با موفقیت اضافه شد.");
         setFormDataPolicy({
@@ -766,6 +737,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           payId: "",
           installmentsCount: 0,
           pdfFile: null,
+                          pay_link: "",
         });
         setShowAddPolicyForm(false);
       } else {
@@ -798,6 +770,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           payment_type: formDataPolicy.paymentType,
           installment_count: formDataPolicy.installmentsCount,
           payment_id: formDataPolicy.payId,
+          pay_link: formDataPolicy.pay_link,
         }),
       });
       if (response.ok) {
@@ -885,6 +858,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       payId: policy.payId || "",
       installmentsCount: policy.installmentsCount || 0,
       pdfFile: policy.pdfFile || null,
+      pay_link: policy.pay_link || "",
     });
     setShowAddPolicyForm(true);
   };
@@ -1525,10 +1499,10 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         payId: "",
                         installmentsCount: 0,
                         pdfFile: null,
+                        pay_link: "",
                       });
-                      setShowAddPolicyForm((prev) => !prev)
+                      setShowAddPolicyForm(true);
                     }}
-                    variant={showAddPolicyForm && !editingPolicy ? "outline" : "default"}
                   >
                     <Plus className="h-4 w-4 ml-2" />
                     صدور بیمه‌نامه
@@ -1764,6 +1738,23 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                             setFormDataPolicy({
                               ...formDataPolicy,
                               payId: e.target.value,
+                            })
+                          }
+                          className="col-span-3"
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="policy-pay_link" className="text-right">
+                          لینک پرداخت پایه
+                        </Label>
+                        <Input
+                          id="policy-pay_link"
+                          name="pay_link"
+                          value={formDataPolicy.pay_link}
+                          onChange={(e) =>
+                            setFormDataPolicy({
+                              ...formDataPolicy,
+                              pay_link: e.target.value,
                             })
                           }
                           className="col-span-3"

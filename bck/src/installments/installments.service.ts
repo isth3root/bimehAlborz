@@ -14,11 +14,17 @@ export class InstallmentsService {
     return this.installmentRepository.find({ relations: ['customer', 'policy'] });
   }
 
-  findAllForCustomer(nationalCode: string): Promise<Installment[]> {
-    return this.installmentRepository.find({
-      where: { customer: { national_code: nationalCode } },
-      relations: ['customer', 'policy'],
-    });
+  async findAllForCustomer(nationalCode: string): Promise<Installment[]> {
+    return this.installmentRepository
+      .createQueryBuilder('installment')
+      .leftJoinAndSelect('installment.customer', 'customer')
+      .leftJoinAndSelect('installment.policy', 'policy')
+      .where('customer.national_code = :nationalCode', { nationalCode })
+      .getMany();
+  }
+
+  findByPolicyId(policyId: number): Promise<Installment[]> {
+    return this.installmentRepository.find({ where: { policy_id: policyId } });
   }
 
   findOne(id: number): Promise<Installment | null> {
