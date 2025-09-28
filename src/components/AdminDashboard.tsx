@@ -735,6 +735,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           status: "فعال",
           paymentType: "اقساطی",
           payId: "",
+          paymentLink: "",
           installmentsCount: 0,
           pdfFile: null,
         });
@@ -802,6 +803,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           status: "فعال",
           paymentType: "اقساطی",
           payId: "",
+          paymentLink: "",
           installmentsCount: 0,
           pdfFile: null,
         });
@@ -2259,7 +2261,9 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                             {getStatusBadge(installment.status)}
                           </TableCell>
                           <TableCell>
-                            {installment.daysOverdue > 0 ? (
+                            {installment.status === 'پرداخت شده' ? (
+                              "-"
+                            ) : installment.daysOverdue > 0 ? (
                               <span className="text-red-600">
                                 {installment.daysOverdue} روز
                               </span>
