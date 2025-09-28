@@ -57,6 +57,12 @@ export class PoliciesController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('admin/policies/near-expiry/count')
+  getNearExpiryCount(): Promise<number> {
+    return this.policiesService.getNearExpiryCount();
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('customer/policies/:id/download')
   async download(@Param('id') id: string, @Res() res: Response) {
     const policy = await this.policiesService.findOne(+id);

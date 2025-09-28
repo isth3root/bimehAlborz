@@ -18,6 +18,19 @@ export class InstallmentsService {
     return this.installmentRepository.findOne({ where: { id }, relations: ['customer', 'policy'] });
   }
 
+  findAllByCustomer(customerId: number): Promise<Installment[]> {
+    return this.installmentRepository.find({
+      where: { customer_id: customerId },
+      relations: ['customer', 'policy'],
+    });
+  }
+
+  findByPolicyId(policyId: number): Promise<Installment[]> {
+    return this.installmentRepository.find({
+      where: { policy_id: policyId },
+    });
+  }
+
   create(installment: Partial<Installment>): Promise<Installment> {
     const newInstallment = this.installmentRepository.create(installment);
     return this.installmentRepository.save(newInstallment);

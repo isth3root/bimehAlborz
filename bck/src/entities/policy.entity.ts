@@ -37,6 +37,9 @@ export class Policy {
   @Column({ type: 'varchar', length: 50 })
   payment_id: string;
 
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  payment_link: string;
+
   @Column({ type: 'varchar', length: 255, nullable: true })
   pdf_path: string;
 

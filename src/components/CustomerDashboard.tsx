@@ -128,7 +128,11 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
                 status = 'آینده';
               }
             }
-            return { ...inst, status };
+            return {
+              ...inst,
+              status,
+              pay_link: inst.pay_link,
+            };
           });
           setAllInstallments(processedInstallments);
           setStats({ overdueCount, nearExpireCount });

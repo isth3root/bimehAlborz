@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import { Policy } from '../entities/policy.entity';
 import { InstallmentsService } from '../installments/installments.service';
 
@@ -55,6 +55,7 @@ export class PoliciesService {
           amount: installmentAmount,
           due_date: dueDate,
           status: 'معوق',
+          pay_link: policyWithRelations.payment_link,
         });
       }
     }
@@ -64,7 +65,17 @@ export class PoliciesService {
 
   async update(id: number, policy: Partial<Policy>): Promise<Policy | null> {
     await this.policyRepository.update(id, policy);
-    return this.findOne(id);
+    const updatedPolicy = await this.findOne(id);
+
+    if (updatedPolicy && policy.payment_link) {
+      const installments = await this.installmentsService.findByPolicyId(id);
+      for (const installment of installments) {
+        if (installment.status !== 'پرداخت شده') {
+          await this.installmentsService.update(installment.id, { pay_link: policy.payment_link });
+        }
+      }
+    }
+    return updatedPolicy;
   }
 
   async remove(id: number): Promise<void> {
@@ -76,6 +87,18 @@ export class PoliciesService {
 
   async getCount(): Promise<number> {
     return this.policyRepository.count();
+  }
+
+  async getNearExpiryCount(): Promise<number> {
+    const now = new Date();
+    const oneMonthFromNow = new Date();
+    oneMonthFromNow.setMonth(now.getMonth() + 1);
+
+    return this.policyRepository.count({
+      where: {
+        end_date: Between(now, oneMonthFromNow),
+      },
+    });
   }
 
   async getAllInstallments() {
