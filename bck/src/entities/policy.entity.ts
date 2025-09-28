@@ -25,7 +25,7 @@ export class Policy {
   @Column({ type: 'date' })
   end_date: Date;
 
-  @Column({ type: 'decimal', precision: 15, scale: 2 })
+  @Column({ type: 'decimal', precision: 20, scale: 2 })
   premium: number;
 
   @Column({ type: 'enum', enum: ['نقدی', 'اقساطی'] })

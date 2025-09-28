@@ -104,10 +104,11 @@ const ClientOnlyDatePicker = React.forwardRef<HTMLDivElement, {
     );
   }
 
+  const parsedDate = parsePersianDate(value);
   return (
     <div ref={ref} id={id}>
       <DatePicker
-        defaultValue={parsePersianDate(value)}
+        defaultValue={parsedDate || undefined}
         onChange={handleDateChange}
         className="w-full"
         inputClass="flex items-center gap-2 border rounded-md px-3 py-2 text-sm bg-white cursor-pointer"
@@ -281,7 +282,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         nationalCode: c.national_code,
         phone: c.phone,
         email: '', // Not in backend
-        birthDate: c.birth_date ? new Date(c.birth_date).toLocaleDateString('fa-IR') : '',
+        birthDate: c.birth_date || '',
         joinDate: c.created_at ? new Date(c.created_at).toLocaleDateString('fa-IR') : '',
         activePolicies: 0, // Calculate or fetch separately
         status: 'فعال', // Default
@@ -325,8 +326,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         customerNationalCode: p.customer ? p.customer.national_code : '',
         type: p.insurance_type,
         vehicle: p.details,
-        startDate: p.start_date ? new Date(p.start_date).toLocaleDateString('fa-IR') : '',
-        endDate: p.end_date ? new Date(p.end_date).toLocaleDateString('fa-IR') : '',
+        startDate: p.start_date ? moment(p.start_date).format("jYYYY/jMM/jDD") : '',
+        endDate: p.end_date ? moment(p.end_date).format("jYYYY/jMM/jDD") : '',
         premium: p.premium.toString(),
         status: p.status,
         paymentType: p.payment_type,
@@ -435,7 +436,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
               customerName: i.customer ? i.customer.full_name : 'Unknown',
               policyType: i.policy ? i.policy.insurance_type : 'Unknown',
               amount: i.amount.toString(),
-              dueDate: dueDate.toLocaleDateString('fa-IR'),
+              dueDate: moment(dueDate).format("jYYYY/jMM/jDD"),
               status,
               daysOverdue,
               payLink: i.pay_link || '',
