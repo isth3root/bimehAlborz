@@ -1121,7 +1121,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-2">کل مشتریان</p>
-                  <p className="text-3xl">{stats.customersCount}</p>
+                  <p className="text-3xl">{stats.customersCount - 1}</p>
                   <p className="text-sm text-green-600 mt-1">آمار به‌روز</p>
                 </div>
                 <Users className="h-8 w-8 text-blue-600" />
