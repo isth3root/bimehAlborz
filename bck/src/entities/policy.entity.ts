@@ -43,6 +43,9 @@ export class Policy {
   @Column({ type: 'varchar', length: 255, nullable: true })
   pdf_path: string;
 
+  @Column({ type: 'enum', enum: ['فعال', 'نزدیک انقضا', 'معوق', 'منقضی'], default: 'فعال' })
+  status: 'فعال' | 'نزدیک انقضا' | 'معوق' | 'منقضی';
+
   @CreateDateColumn()
   created_at: Date;
 

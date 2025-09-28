@@ -25,11 +25,24 @@ export class PoliciesService {
   }
 
   async create(policy: Partial<Policy>): Promise<Policy> {
+    // Calculate status based on dates if not provided
+    let status = policy.status || 'فعال';
+    if (!policy.status && policy.end_date) {
+      const now = new Date();
+      const endDate = new Date(policy.end_date);
+      if (endDate < now) {
+        status = 'منقضی';
+      } else if ((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30) <= 1) {
+        status = 'نزدیک انقضا';
+      }
+    }
+
     const newPolicy = this.policyRepository.create({
       ...policy,
       customer_national_code: policy.customer_national_code,
       premium: +(policy.premium || 0),
       installment_count: +(policy.installment_count || 0),
+      status,
     });
     const savedPolicy = await this.policyRepository.save(newPolicy);
 

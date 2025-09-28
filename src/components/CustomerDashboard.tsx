@@ -75,15 +75,6 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
           const data = await policiesResponse.json();
           const now = new Date();
           const policies = data.map((p: any) => {
-            const endDate = p.end_date ? new Date(p.end_date) : null;
-            let status = 'فعال';
-            if (endDate) {
-              if (endDate < now) {
-                status = 'منقضی';
-              } else if ((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30) <= 1) {
-                status = 'نزدیک انقضا';
-              }
-            }
             let icon, color, bgColor;
             switch (p.insurance_type) {
               case 'ثالث': icon = Car; color = 'text-blue-600'; bgColor = 'bg-blue-100'; break;
@@ -98,7 +89,7 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
               vehicle: p.details,
               startDate: p.start_date ? new Date(p.start_date).toLocaleDateString('fa-IR') : '',
               endDate: p.end_date ? new Date(p.end_date).toLocaleDateString('fa-IR') : '',
-              status,
+              status: p.status,
               icon,
               color,
               bgColor,

@@ -328,7 +328,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         startDate: p.start_date ? new Date(p.start_date).toLocaleDateString('fa-IR') : '',
         endDate: p.end_date ? new Date(p.end_date).toLocaleDateString('fa-IR') : '',
         premium: p.premium.toString(),
-        status: 'فعال', // Default
+        status: p.status,
         paymentType: p.payment_type,
         payId: p.payment_id,
         paymentLink: p.payment_link,
@@ -456,22 +456,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     }
   }, [token, customers, policies]);
 
-  // Update policy statuses based on expiration dates
-  useEffect(() => {
-    const now = moment();
-    setPolicies(prevPolicies =>
-      prevPolicies.map(policy => {
-        const endDate = moment(policy.endDate, "jYYYY/jMM/jDD");
-        if (endDate.isBefore(now)) {
-          return { ...policy, status: "معوق" };
-        } else if (endDate.diff(now, 'months', true) <= 1) {
-          return { ...policy, status: "نزدیک انقضا" };
-        } else {
-          return { ...policy, status: "فعال" };
-        }
-      })
-    );
-  }, []);
 
 
   const tabIndex =
@@ -692,6 +676,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       formData.append('start_date', moment(formDataPolicy.startDate, "jYYYY/jMM/jDD").format("YYYY-MM-DD"));
       formData.append('end_date', moment(formDataPolicy.endDate, "jYYYY/jMM/jDD").format("YYYY-MM-DD"));
       formData.append('premium', formDataPolicy.premium.replace(/,/g, ''));
+      formData.append('status', formDataPolicy.status);
       formData.append('payment_type', formDataPolicy.paymentType);
       formData.append('installment_count', formDataPolicy.installmentsCount.toString());
       formData.append('payment_id', formDataPolicy.payId);
@@ -717,7 +702,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           startDate: formDataPolicy.startDate,
           endDate: formDataPolicy.endDate,
           premium: newPolicy.premium.toString(),
-          status: 'فعال',
+          status: newPolicy.status,
           paymentType: newPolicy.payment_type,
           payId: newPolicy.payment_id,
           installmentsCount: newPolicy.installment_count,
@@ -765,6 +750,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           start_date: moment(formDataPolicy.startDate, "jYYYY/jMM/jDD").format("YYYY-MM-DD"),
           end_date: moment(formDataPolicy.endDate, "jYYYY/jMM/jDD").format("YYYY-MM-DD"),
           premium: formDataPolicy.premium.replace(/,/g, ''),
+          status: formDataPolicy.status,
           payment_type: formDataPolicy.paymentType,
           installment_count: formDataPolicy.installmentsCount,
           payment_id: formDataPolicy.payId,
@@ -784,6 +770,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   startDate: formDataPolicy.startDate,
                   endDate: formDataPolicy.endDate,
                   premium: updatedPolicy.premium.toString(),
+                  status: updatedPolicy.status,
                   paymentType: updatedPolicy.payment_type,
                   payId: updatedPolicy.payment_id,
                   installmentsCount: updatedPolicy.installment_count,
@@ -1688,6 +1675,31 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           }
                           className="col-span-3"
                         />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="policy-status" className="text-right">
+                          وضعیت بیمه‌نامه
+                        </Label>
+                        <Select
+                          name="policy-status"
+                          value={formDataPolicy.status}
+                          onValueChange={(value: string) =>
+                            setFormDataPolicy({
+                              ...formDataPolicy,
+                              status: value,
+                            })
+                          }
+                        >
+                          <SelectTrigger className="col-span-3">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="فعال">فعال</SelectItem>
+                            <SelectItem value="نزدیک انقضا">نزدیک انقضا</SelectItem>
+                            <SelectItem value="معوق">معوق</SelectItem>
+                            <SelectItem value="منقضی">منقضی</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="policy-paymentType" className="text-right">
