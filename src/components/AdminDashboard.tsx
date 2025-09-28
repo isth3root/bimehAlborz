@@ -142,6 +142,7 @@ interface Customer {
 interface Policy {
   id: string;
   customerName: string;
+  customerNationalCode?: string;
   type: string;
   vehicle: string;
   startDate: string;
@@ -179,6 +180,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     policiesCount: 0,
     overdueInstallmentsCount: 0,
     nearExpiryPoliciesCount: 0,
+    nearExpiryInstallmentsCount: 0,
   });
 
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -320,6 +322,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       setPolicies(data.map((p: any) => ({
         id: p.id.toString(),
         customerName: p.customer ? p.customer.full_name : 'Unknown',
+        customerNationalCode: p.customer ? p.customer.national_code : '',
         type: p.insurance_type,
         vehicle: p.details,
         startDate: p.start_date ? new Date(p.start_date).toLocaleDateString('fa-IR') : '',
@@ -328,6 +331,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         status: 'فعال', // Default
         paymentType: p.payment_type,
         payId: p.payment_id,
+        paymentLink: p.payment_link,
         installmentsCount: p.installment_count,
         pdfFile: null,
       })));
@@ -370,11 +374,19 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       });
       const nearExpiryPoliciesCount = nearExpiryResponse.ok ? await nearExpiryResponse.json() : 0;
 
+      const nearExpiryInstallmentsResponse = await fetch('http://localhost:3000/installments/near-expiry/count', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const nearExpiryInstallmentsCount = nearExpiryInstallmentsResponse.ok ? await nearExpiryInstallmentsResponse.json() : 0;
+
       setStats({
         customersCount,
         policiesCount,
         overdueInstallmentsCount,
         nearExpiryPoliciesCount,
+        nearExpiryInstallmentsCount,
       });
     } catch (error) {
       console.error('Error fetching policies:', error);
@@ -401,17 +413,30 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         });
         if (response.ok) {
           const data = await response.json();
+          const now = moment();
           const processedInstallments = data.map((i: any) => {
             const dueDate = new Date(i.due_date);
-            const now = new Date();
-            const daysOverdue = dueDate < now ? Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+            const dueDateMoment = moment(i.due_date);
+            const daysOverdue = dueDateMoment.isBefore(now) ? now.diff(dueDateMoment, 'days') : 0;
+
+            let status = i.status;
+            if (status !== 'پرداخت شده') {
+              if (dueDateMoment.isBefore(now)) {
+                status = "معوق";
+              } else if (dueDateMoment.diff(now, 'days') <= 30) {
+                status = "نزدیک انقضا";
+              } else {
+                status = "آینده";
+              }
+            }
+
             return {
               id: i.id.toString(),
               customerName: i.customer ? i.customer.full_name : 'Unknown',
               policyType: i.policy ? i.policy.insurance_type : 'Unknown',
               amount: i.amount.toString(),
               dueDate: dueDate.toLocaleDateString('fa-IR'),
-              status: i.status || 'معوق',
+              status,
               daysOverdue,
               payLink: i.pay_link || '',
               customerNationalCode: i.customer ? i.customer.national_code : '',
@@ -448,30 +473,14 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     );
   }, []);
 
-  // Update installment statuses based on due dates
-  useEffect(() => {
-    const now = moment();
-    setInstallments(prevInstallments =>
-      prevInstallments.map(installment => {
-        if (installment.status === "پرداخت شده") return installment; // Don't change paid installments
-        const dueDate = moment(installment.dueDate, "jYYYY/jMM/jDD");
-        if (dueDate.isBefore(now)) {
-          return { ...installment, status: "معوق" };
-        } else if (dueDate.diff(now, 'days') <= 30) {
-          return { ...installment, status: "نزدیک انقضا" };
-        } else {
-          return { ...installment, status: "آینده" };
-        }
-      })
-    );
-  }, []);
 
   const tabIndex =
     { customers: 0, policies: 1, installments: 2, blogs: 3 }[activeTab] || 0;
 
   const formatPrice = (price: string) => {
-    const numeric = price.replace(/[^\d]/g, "");
-    const formatted = numeric.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    if (!price) return "0 ریال";
+    const integerPart = String(price).split('.')[0];
+    const formatted = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     return `${formatted} ریال`;
   };
 
@@ -686,6 +695,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       formData.append('payment_type', formDataPolicy.paymentType);
       formData.append('installment_count', formDataPolicy.installmentsCount.toString());
       formData.append('payment_id', formDataPolicy.payId);
+      formData.append('payment_link', formDataPolicy.paymentLink);
       if (formDataPolicy.pdfFile) {
         formData.append('pdf', formDataPolicy.pdfFile);
       }
@@ -757,6 +767,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           payment_type: formDataPolicy.paymentType,
           installment_count: formDataPolicy.installmentsCount,
           payment_id: formDataPolicy.payId,
+          payment_link: formDataPolicy.paymentLink,
         }),
       });
       if (response.ok) {
@@ -830,7 +841,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     setEditingPolicy(policy);
     setFormDataPolicy({
       customerName: policy.customerName,
-      customerNationalCode: "",
+      customerNationalCode: policy.customerNationalCode || "",
       type: policy.type,
       vehicle: policy.vehicle,
       startDate: policy.startDate,
@@ -839,6 +850,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       status: policy.status,
       paymentType: policy.paymentType,
       payId: policy.payId || "",
+      paymentLink: policy.paymentLink || "",
       installmentsCount: policy.installmentsCount || 0,
       pdfFile: policy.pdfFile || null,
     });
@@ -1174,8 +1186,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-2">بیمه‌های نزدیک انقضا</p>
-                  <p className="text-3xl text-yellow-600">{stats.nearExpiryPoliciesCount}</p>
+                  <p className="text-sm text-gray-600 mb-2">اقساط نزدیک سررسید</p>
+                  <p className="text-3xl text-yellow-600">{stats.nearExpiryInstallmentsCount}</p>
                   <p className="text-sm text-yellow-600 mt-1">در ۳۰ روز آینده</p>
                 </div>
                 <Calendar className="h-8 w-8 text-yellow-600" />
