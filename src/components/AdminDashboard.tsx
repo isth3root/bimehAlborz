@@ -1329,7 +1329,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           htmlFor="insuranceCode"
                           className="text-right"
                         >
-                          کد بیمه گزار
+                          کد بیمه گذار
                         </Label>
                         <Input
                           id="insuranceCode"
