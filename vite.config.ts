@@ -3,9 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  base: '/bimehAlborz/',
+  base: '/',
   plugins: [react(), tailwindcss()],
-  server: {
-    historyApiFallback: true,
-  },
+  appType: 'spa'
 })

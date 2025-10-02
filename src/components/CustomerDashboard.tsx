@@ -38,7 +38,7 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
     overdueCount: 0,
     nearExpireCount: 0,
   });
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
   const [showInstallmentsDialog, setShowInstallmentsDialog] = useState(false);
 
@@ -73,7 +73,7 @@ export function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
 
         if (policiesResponse.ok) {
           const data = await policiesResponse.json();
-          const now = new Date();
+          // const now = new Date();
           const policies = data.map((p: any) => {
             let icon, color, bgColor;
             switch (p.insurance_type) {

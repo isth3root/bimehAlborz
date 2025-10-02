@@ -52,7 +52,6 @@ import { toast } from "sonner";
 import { DatePicker } from "zaman";
 import moment from "moment-jalaali";
 
-
 // Client-only Persian date picker component using zaman
 const ClientOnlyDatePicker = React.forwardRef<HTMLDivElement, {
   value: string;
@@ -175,7 +174,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [installments, setInstallments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [stats, setStats] = useState({
     customersCount: 0,
     policiesCount: 0,
@@ -198,7 +197,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [showCustomerForm, setShowCustomerForm] = useState(false);
 
   const [policySearchQuery, setPolicySearchQuery] = useState("");
-  const [, setIsEditPolicyDialogOpen] = useState(false);
+  
   const [editingPolicy, setEditingPolicy] = useState<Policy | null>(null);
   const [formDataPolicy, setFormDataPolicy] = useState({
     customerName: "",
@@ -256,6 +255,12 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   useEffect(() => {
 
+    if (!token) {
+      console.error("token not found");
+      onLogout();
+      return;
+    }
+
   const fetchCustomers = async () => {
     try {
       const response = await fetch('http://localhost:3000/admin/customers', {
@@ -276,12 +281,16 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       }
       
       const data = await response.json();
+      if (!Array.isArray(data)) {
+        console.error('Expected array for customers data');
+        return;
+      }
       setCustomers(data.map((c: any) => ({
         id: c.id ? c.id.toString() : '',
         name: c.full_name,
         nationalCode: c.national_code,
         phone: c.phone,
-        email: '', // Not in backend
+        email: '',
         birthDate: c.birth_date || '',
         joinDate: c.created_at ? new Date(c.created_at).toLocaleDateString('fa-IR') : '',
         activePolicies: 0, // Calculate or fetch separately
@@ -320,6 +329,10 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       }
       
       const data = await response.json();
+      if (!Array.isArray(data)) {
+        console.error('Expected array for policies data');
+        return;
+      }
       setPolicies(data.map((p: any) => ({
         id: p.id.toString(),
         customerName: p.customer ? p.customer.full_name : 'Unknown',
@@ -352,35 +365,40 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           Authorization: `Bearer ${token}`,
         },
       });
-      const customersCount = customersCountResponse.ok ? await customersCountResponse.json() : 0;
+      const customersCountData = customersCountResponse.ok ? await customersCountResponse.json() : 0;
+      const customersCount = typeof customersCountData === 'object' && customersCountData.count !== undefined ? customersCountData.count : customersCountData;
 
       const policiesCountResponse = await fetch('http://localhost:3000/count', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      const policiesCount = policiesCountResponse.ok ? await policiesCountResponse.json() : 0;
+      const policiesCountData = policiesCountResponse.ok ? await policiesCountResponse.json() : 0;
+      const policiesCount = typeof policiesCountData === 'object' && policiesCountData.count !== undefined ? policiesCountData.count : policiesCountData;
 
       const overdueResponse = await fetch('http://localhost:3000/installments/overdue/count', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      const overdueInstallmentsCount = overdueResponse.ok ? await overdueResponse.json() : 0;
+      const overdueData = overdueResponse.ok ? await overdueResponse.json() : 0;
+      const overdueInstallmentsCount = typeof overdueData === 'object' && overdueData.count !== undefined ? overdueData.count : overdueData;
 
       const nearExpiryResponse = await fetch('http://localhost:3000/admin/policies/near-expiry/count', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      const nearExpiryPoliciesCount = nearExpiryResponse.ok ? await nearExpiryResponse.json() : 0;
+      const nearExpiryData = nearExpiryResponse.ok ? await nearExpiryResponse.json() : 0;
+      const nearExpiryPoliciesCount = typeof nearExpiryData === 'object' && nearExpiryData.count !== undefined ? nearExpiryData.count : nearExpiryData;
 
       const nearExpiryInstallmentsResponse = await fetch('http://localhost:3000/installments/near-expiry/count', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      const nearExpiryInstallmentsCount = nearExpiryInstallmentsResponse.ok ? await nearExpiryInstallmentsResponse.json() : 0;
+      const nearExpiryInstallmentsData = nearExpiryInstallmentsResponse.ok ? await nearExpiryInstallmentsResponse.json() : 0;
+      const nearExpiryInstallmentsCount = typeof nearExpiryInstallmentsData === 'object' && nearExpiryInstallmentsData.count !== undefined ? nearExpiryInstallmentsData.count : nearExpiryInstallmentsData;
 
       setStats({
         customersCount,
@@ -414,6 +432,10 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         });
         if (response.ok) {
           const data = await response.json();
+          if (!Array.isArray(data)) {
+            console.error('Expected array for installments data');
+            return;
+          }
           const now = moment();
           const processedInstallments = data.map((i: any) => {
             const dueDate = new Date(i.due_date);
@@ -899,7 +921,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       });
       
       if (response.ok) {
-        const updatedInstallment = await response.json();
+        // const updatedInstallment = await response.json();
 
         // Update local state with the response
         setInstallments(
