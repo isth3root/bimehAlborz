@@ -17,7 +17,7 @@ export function Header({ onNavigate, currentPage }: HeaderProps) {
       <div className="bg-gray-50 py-2">
         <div className="container mx-auto px-4 flex justify-between items-center flex-row-reverse">
           <div className="text-sm text-gray-700 font-bold">
-            نماینگی رییس زاده
+            نمایندگی رئیس زاده
           </div>
           <Button
             variant="ghost"

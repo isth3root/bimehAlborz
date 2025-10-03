@@ -110,10 +110,12 @@ const ClientOnlyDatePicker = React.forwardRef<HTMLDivElement, {
         defaultValue={parsedDate || undefined}
         onChange={handleDateChange}
         className="w-full"
-        inputClass="flex items-center gap-2 border rounded-md px-3 py-2 text-sm bg-white cursor-pointer"
+        inputClass="flex items-center gap-2 border rounded-md px-3 py-2 text-sm bg-white"
         inputAttributes={{
           placeholder: placeholder,
           style: { direction: "rtl" },
+          value: value,
+          onChange: (e) => onChange(e.target.value),
         }}
       />
     </div>
@@ -143,6 +145,7 @@ interface Policy {
   id: string;
   customerName: string;
   customerNationalCode?: string;
+  policyNumber?: string;
   type: string;
   vehicle: string;
   startDate: string;
@@ -202,6 +205,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [formDataPolicy, setFormDataPolicy] = useState({
     customerName: "",
     customerNationalCode: "",
+    policyNumber: "",
     type: "",
     vehicle: "",
     startDate: "",
@@ -735,6 +739,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         setFormDataPolicy({
           customerName: "",
           customerNationalCode: "",
+          policyNumber: "",
           type: "",
           vehicle: "",
           startDate: "",
@@ -805,6 +810,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         setFormDataPolicy({
           customerName: "",
           customerNationalCode: "",
+          policyNumber: "",
           type: "",
           vehicle: "",
           startDate: "",
@@ -854,6 +860,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     setFormDataPolicy({
       customerName: policy.customerName,
       customerNationalCode: policy.customerNationalCode || "",
+      policyNumber: policy.policyNumber || "",
       type: policy.type,
       vehicle: policy.vehicle,
       startDate: policy.startDate,
@@ -1603,6 +1610,26 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                            className="col-span-3"
                          />
                        </div>
+                       <div className="grid grid-cols-4 items-center gap-4">
+                         <Label
+                           htmlFor="policy-policyNumber"
+                           className="text-right"
+                         >
+                           شماره بیمه‌نامه
+                         </Label>
+                         <Input
+                           id="policy-policyNumber"
+                           name="policyNumber"
+                           value={formDataPolicy.policyNumber}
+                           onChange={(e) =>
+                             setFormDataPolicy({
+                               ...formDataPolicy,
+                               policyNumber: e.target.value,
+                             })
+                           }
+                           className="col-span-3"
+                         />
+                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="policy-type" className="text-right">
                           نوع بیمه
@@ -1625,6 +1652,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                             <SelectItem value="بدنه">بدنه</SelectItem>
                             <SelectItem value="آتش سوزی">آتش سوزی</SelectItem>
                             <SelectItem value="حوادث">حوادث</SelectItem>
+                            <SelectItem value="زندگی">زندگی</SelectItem>
+                            <SelectItem value="مسئولیت">مسئولیت</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -1657,9 +1686,11 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                             id="policy-startDate"
                             value={formDataPolicy.startDate}
                             onChange={(date: string) => {
+                              const endDate = moment(date, "jYYYY/jMM/jDD").add(1, 'year').format("jYYYY/jMM/jDD");
                               setFormDataPolicy({
                                 ...formDataPolicy,
                                 startDate: date,
+                                endDate: endDate,
                               });
                             }}
                             placeholder="انتخاب تاریخ شروع"
@@ -1719,7 +1750,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           <SelectContent>
                             <SelectItem value="فعال">فعال</SelectItem>
                             <SelectItem value="نزدیک انقضا">نزدیک انقضا</SelectItem>
-                            <SelectItem value="معوق">معوق</SelectItem>
                             <SelectItem value="منقضی">منقضی</SelectItem>
                           </SelectContent>
                         </Select>
@@ -1834,6 +1864,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                             setFormDataPolicy({
                               customerName: "",
                               customerNationalCode: "",
+                              policyNumber: "",
                               type: "",
                               vehicle: "",
                               startDate: "",
@@ -1879,7 +1910,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                        <TableHead className="text-right">حق بیمه</TableHead>
                        <TableHead className="text-right">تاریخ انقضا</TableHead>
                        <TableHead className="text-right">تاریخ شروع</TableHead>
-                       <TableHead className="text-right">موضوع بیمه</TableHead>
+                       <TableHead className="text-right">جزییات بیمه</TableHead>
                        <TableHead className="text-right">نوع بیمه</TableHead>
                        <TableHead className="text-right">نام مشتری</TableHead>
                        <TableHead className="text-right">شماره بیمه‌نامه</TableHead>
@@ -2136,7 +2167,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="معوق">معوق</SelectItem>
-                            <SelectItem value="نزدیک انقضا">نزدیک انقضا</SelectItem>
                             <SelectItem value="آینده">آینده</SelectItem>
                             <SelectItem value="پرداخت شده">
                               پرداخت شده
